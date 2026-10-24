@@ -26,6 +26,33 @@ test('401 clears token and requests login',async()=>{
  const ctx=setup([{status:401,body:{detail:'not displayed'}}]);
  await assert.rejects(()=>ctx.client.history(),/sign in/);assert.equal(ctx.session,null);assert.equal(ctx.unauthorized,1);
 });
+test('login 401 preserves existing session and does not call onUnauthorized',async()=>{
+ const ctx=setup([{status:401,body:{detail:'Invalid email or password'}}]);
+ const initialSession=ctx.session;
+ await assert.rejects(
+  ()=>ctx.client.login('wrong@example.com','badpassword'),
+  error=>error.message==='Incorrect email or password. Please try again.' && error.status===401
+ );
+ assert.equal(ctx.session,initialSession);
+ assert.equal(ctx.unauthorized,0);
+});
+test('login 422 returns generic incorrect email or password error',async()=>{
+ const ctx=setup([{status:422,body:{detail:'Validation error'}}]);
+ const initialSession=ctx.session;
+ await assert.rejects(
+  ()=>ctx.client.login('not-an-email','short'),
+  error=>error.message==='Incorrect email or password. Please try again.' && error.status===422
+ );
+ assert.equal(ctx.session,initialSession);
+ assert.equal(ctx.unauthorized,0);
+});
+test('login network failure returns distinct connection error',async()=>{
+ const ctx=setup([new Error('ECONNREFUSED')]);
+ await assert.rejects(
+  ()=>ctx.client.login('demo@example.com','synthetic-password'),
+  error=>error.message==='Unable to connect. Please try again later.' && error.code==='NETWORK'
+ );
+});
 test('expired token does not reach API',async()=>{
  const ctx=setup();await ctx.storage.set({token:'expired',expiresAt:0});
  await assert.rejects(()=>ctx.client.history(),/sign in/);assert.equal(ctx.calls.length,0);
@@ -46,9 +73,25 @@ test('production refuses HTTP and local development permits loopback only',()=>{
  assert.doesNotThrow(()=>createClient({...options,baseUrl:'http://127.0.0.1:8000',allowHttp:true}));
 });
 
-test('integer-cent preview agrees with decimal backend boundary rounding',()=>{
- const { preview }=require('../lib/money');
- assert.deepEqual(preview('1000.00'),{gross:'1000.00',fee:'30.00',net:'970.00',received:'11.62'});
- assert.equal(preview('0.50').fee,'0.02');
- for(const invalid of ['NaN','-1','0','1.001','1000000.01'])assert.equal(preview(invalid),null);
+test('INR validation canonicalizes input without calculating a payout',()=>{
+ const { normalizeInr }=require('../lib/money');
+ assert.equal(normalizeInr('1000'),'1000.00');
+ assert.equal(normalizeInr('0.50'),'0.50');
+ for(const invalid of ['NaN','-1','0','1.001','1000000.01'])assert.equal(normalizeInr(invalid),null);
+});
+
+test('quote requests authenticate and preserve decimal request strings',async()=>{
+ const ctx=setup([{status:200,body:{simulation:true}}]);
+ await ctx.client.quote({recipient_name:'Synthetic',gross_amount:'1000.00'});
+ assert.equal(ctx.calls[0][0],'https://api.example.com/simulation/quote');
+ assert.equal(ctx.calls[0][1].method,'POST');
+ assert.equal(ctx.calls[0][1].headers.Authorization,'Bearer synthetic');
+ assert.equal(JSON.parse(ctx.calls[0][1].body).gross_amount,'1000.00');
+});
+
+test('quote and submission errors use safe contract-specific messages',async()=>{
+ const ctx=setup([{status:503,body:{detail:'private'}},{status:422,body:{detail:'private'}},{status:409,body:{detail:'private'}}]);
+ await assert.rejects(()=>ctx.client.quote({}),error=>error.status===503 && /reference rates/.test(error.message));
+ await assert.rejects(()=>ctx.client.transfer({},'key'),error=>error.status===422 && /expired/.test(error.message));
+ await assert.rejects(()=>ctx.client.transfer({},'key'),error=>error.status===409 && /conflict/.test(error.message));
 });

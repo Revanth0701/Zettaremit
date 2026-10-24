@@ -1,7 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, useWindowDimensions } from 'react-native';
 
 export default function WelcomeScreen({ navigation }) {
+  const { width } = useWindowDimensions();
+  const isSmall = width < 400;
+
   return (
     <SafeAreaView style={styles.container}>
       
@@ -15,10 +18,10 @@ export default function WelcomeScreen({ navigation }) {
           />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.headline}>ZettaRemit</Text>
-          <Text style={styles.headline}>   </Text>
-          <Text style={styles.headline}>Effortless Transfers,</Text>
-          <Text style={styles.headline}>Boundless Connections.</Text>
+          <Text style={[styles.headline, isSmall && styles.headlineSmall]}>ZettaRemit</Text>
+          <Text style={[styles.headline, isSmall && styles.headlineSmall]}>   </Text>
+          <Text style={[styles.headline, isSmall && styles.headlineSmall]}>Effortless Transfers,</Text>
+          <Text style={[styles.headline, isSmall && styles.headlineSmall]}>Boundless Connections.</Text>
           <Text style={styles.subheading}>
             Quick, reliable money transfers between the U.S. and India, designed for students and families
           </Text>
@@ -63,7 +66,7 @@ const styles = StyleSheet.create({
   contentWrapper: { 
     flex: 1, 
     justifyContent: 'center', 
-    alignItems: 'center',
+    alignItems: 'center', 
     marginTop: 40 
   },
   logoContainer: { 
@@ -83,6 +86,10 @@ const styles = StyleSheet.create({
     color: '#fcf8f8', 
     textAlign: 'center', 
     lineHeight: 34 
+  },
+  headlineSmall: {
+    fontSize: 22,
+    lineHeight: 30
   },
   subheading: { 
     fontSize: 14, 
@@ -131,7 +138,7 @@ const styles = StyleSheet.create({
     lineHeight: 18 
   },
   linkText: { 
-    textDecorationLine: 'underline',
+    textDecorationLine: 'underline', 
     color: '#718096' 
   }
 });

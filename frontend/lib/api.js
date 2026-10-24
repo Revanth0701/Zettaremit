@@ -33,6 +33,7 @@ export default {
   login: (...args) => getClient().login(...args),
   register: (...args) => getClient().register(...args),
   history: () => getClient().history(),
+  quote: (...args) => getClient().quote(...args),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
   logout: () => getClient().logout()

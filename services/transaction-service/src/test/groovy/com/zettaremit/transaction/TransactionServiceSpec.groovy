@@ -12,18 +12,18 @@ class TransactionServiceSpec extends Specification {
     def secret = "synthetic-test-service-token-32-characters"
     def mvc = MockMvcBuilders.standaloneSetup(new TransactionController())
         .addFilters(new InternalAuthenticationFilter(secret)).build()
-    def payload = '{"ownerId":"synthetic","requestId":"test-request-0001","recipientName":"Synthetic","grossAmount":"1000.00"}'
+    def payload = '{"ownerId":"synthetic","requestId":"test-request-0001","recipientName":"Synthetic","grossAmount":"1000.00","exchangeRate":"83.50000000"}'
 
     def "reject missing or incorrect service credentials"() {
         expect:
-        mvc.perform(post('/internal/v1/quote').contentType(MediaType.APPLICATION_JSON).content(payload))
+        mvc.perform(post('/internal/v2/quote').contentType(MediaType.APPLICATION_JSON).content(payload))
             .andExpect(status().isUnauthorized())
-        mvc.perform(post('/internal/v1/quote').header('Authorization','Bearer wrong').contentType(MediaType.APPLICATION_JSON).content(payload))
+        mvc.perform(post('/internal/v2/quote').header('Authorization','Bearer wrong').contentType(MediaType.APPLICATION_JSON).content(payload))
             .andExpect(status().isUnauthorized())
     }
     def "authenticated quote is decimal safe and never claims settlement"() {
         expect:
-        mvc.perform(post('/internal/v1/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload))
+        mvc.perform(post('/internal/v2/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload))
             .andExpect(status().isOk()).andExpect(jsonPath('$.feeDeducted').value(30.0d))
             .andExpect(jsonPath('$.netAmount').value(970.0d))
             .andExpect(jsonPath('$.recipientAmount').value(11.62d))
@@ -31,9 +31,9 @@ class TransactionServiceSpec extends Specification {
     }
     def "reject invalid amount and unknown fields"() {
         expect:
-        mvc.perform(post('/internal/v1/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload.replace('1000.00','-1')))
+        mvc.perform(post('/internal/v2/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload.replace('1000.00','-1')))
             .andExpect(status().isBadRequest())
-        mvc.perform(post('/internal/v1/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload.replace('"ownerId"','"unexpected"')))
+        mvc.perform(post('/internal/v2/quote').header('Authorization','Bearer '+secret).contentType(MediaType.APPLICATION_JSON).content(payload.replace('"ownerId"','"unexpected"')))
             .andExpect(status().isBadRequest())
     }
     def "legacy public transaction endpoints are removed"() {

@@ -1,14 +1,10 @@
-// Display-only preview with integer cents; server/Java remain authoritative.
+// Validate/canonicalize INR input only. All fees and payouts come from quotes.
 function fixed(cents) { return `${cents / 100n}.${(cents % 100n).toString().padStart(2,'0')}`; }
-function preview(input) {
-  if (!/^[0-9]+(?:\.[0-9]{0,2})?$/.test(input)) return null;
+function normalizeInr(input) {
+  if (typeof input !== 'string' || input.length > 32 || !/^[0-9]+(?:\.[0-9]{0,2})?$/.test(input)) return null;
   const [whole, fraction=''] = input.split('.');
   const gross = BigInt(whole) * 100n + BigInt(fraction.padEnd(2,'0'));
   if (gross <= 0n || gross > 100000000n) return null;
-  const fee = (gross * 3n + 50n) / 100n;
-  const net = gross - fee;
-  // Fixed illustrative 83.5 INR/USD. Round net INR cents / 83.5 to USD cents.
-  const received = (net * 2n + 83n) / 167n;
-  return {gross:fixed(gross), fee:fixed(fee), net:fixed(net), received:fixed(received)};
+  return fixed(gross);
 }
-module.exports = { preview };
+module.exports = { normalizeInr };
