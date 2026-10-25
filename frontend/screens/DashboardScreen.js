@@ -32,7 +32,8 @@ export default function DashboardScreen({ navigation }) {
   }, [flow]);
   const quote = quoteState.quote;
   const quoteCurrent = !!quote && !quoteState.expired && Date.parse(quote.expires_at) > Date.now();
-  const canSubmit = quoteCurrent && quoteState.accepted && !submitting && !quoteState.pending;
+  const canProceed = quoteCurrent && !quoteState.expired && !submitting && !quoteState.pending && !quoteState.loading;
+  const canSubmit = canProceed;
   const rawInr = quote ? quote.gross_amount : '—';
   const feeAmount = quote ? quote.fee_deducted : '—';
   const receiveAmountUsd = quote ? quote.recipient_amount : '—';
@@ -43,7 +44,15 @@ export default function DashboardScreen({ navigation }) {
     if (flow.setInput(recipient,value)) setSendAmountInr(value);
   };
   const loadQuote = () => { flow.setInput(recipient,sendAmountInr); return flow.loadQuote(); };
-  const acceptQuote = () => { if (flow.accept()) setAppStep(4); };
+  const handleStep3Proceed = () => {
+    if (!canProceed) return;
+    if (!flow.accept()) {
+      setError('Unable to confirm quote. Please try again.');
+      return;
+    }
+    setAppStep(4);
+  };
+  const acceptQuote = handleStep3Proceed;
 
   const formatNum = (num) => {
     if (!num) return '0';
@@ -74,12 +83,42 @@ export default function DashboardScreen({ navigation }) {
   };
   useEffect(() => { fetchTransactions(); }, []);
 
-  const handleProceedFromPayment = () => {
-    if (!canSubmit) { setError('Refresh and accept a current quote before proceeding.'); return; }
-    if (paymentMethod === 'netbanking') setAppStep(5);
-    else handleTransferSubmit();
+  const handleProceedFromPayment = async () => {
+    if (!canProceed) { setError('A valid quote is required before proceeding.'); return; }
+    if (!paymentMethod || (paymentMethod === 'upi' && !isUpiVerified)) {
+      setError('Please select and verify a payment method.');
+      return;
+    }
+    if (!quoteState.accepted) {
+      const ok = flow.accept();
+      if (!ok) {
+        setError('Unable to confirm quote. Please review the updated quote.');
+        return;
+      }
+    }
+    if (paymentMethod === 'netbanking') {
+      setAppStep(5);
+    } else {
+      await handleTransferSubmit();
+    }
+  };
+  const handleIndianBankSubmit = async () => {
+    if (!canProceed) { setError('A valid quote is required before proceeding.'); return; }
+    if (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) {
+      setError('Please enter all Indian bank details.');
+      return;
+    }
+    if (!quoteState.accepted) {
+      const ok = flow.accept();
+      if (!ok) {
+        setError('Unable to confirm quote. Please review the updated quote.');
+        return;
+      }
+    }
+    await handleTransferSubmit();
   };
   const handleTransferSubmit = async (retry = false) => {
+    if (submitting) return; // Prevent duplicate submissions from rapid repeated clicks
     setError('');
     const transaction = await (retry === true ? flow.retryPending() : flow.submit());
     if (transaction) {
@@ -88,6 +127,48 @@ export default function DashboardScreen({ navigation }) {
       await fetchTransactions();
     }
   };
+
+  const [userName, setUserName] = useState('');
+  useEffect(() => {
+    if (typeof api.session === 'function') {
+      api.session().then(s => {
+        if (s?.fullName && typeof s.fullName === 'string' && s.fullName.trim()) {
+          setUserName(s.fullName.trim());
+        }
+      }).catch(() => {});
+    }
+  }, []);
+  const displayName = userName && userName.trim() ? userName.trim() : 'User';
+
+  const [referenceRate, setReferenceRate] = useState(quote ? quote.exchange_rate : null);
+  useEffect(() => {
+    if (typeof api.config === 'function') {
+      api.config().then(data => {
+        if (data?.inr_per_usd) setReferenceRate(data.inr_per_usd);
+      }).catch(() => {});
+    }
+  }, []);
+  useEffect(() => {
+    if (quote?.exchange_rate) setReferenceRate(quote.exchange_rate);
+  }, [quote]);
+
+  // Debounced auto-quote on valid amount & recipient change
+  useEffect(() => {
+    if (!recipient.trim() || !sendAmountInr) return;
+    const timer = setTimeout(() => {
+      flow.setInput(recipient, sendAmountInr);
+      flow.loadQuote();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [sendAmountInr, recipient, appStep]);
+
+  // Auto-refresh expired quote if on steps 3, 4, or 5
+  useEffect(() => {
+    if (appStep >= 3 && appStep <= 5 && quoteState.expired && recipient.trim() && sendAmountInr && !submitting && !quoteState.pending) {
+      flow.setInput(recipient, sendAmountInr);
+      flow.loadQuote();
+    }
+  }, [quoteState.expired, appStep, recipient, sendAmountInr, submitting, quoteState.pending]);
 
   const resetFlow = () => {
     if (!flow.reset()) return;
@@ -102,17 +183,37 @@ export default function DashboardScreen({ navigation }) {
     setIfscCode('');
   };
 
-  const quoteBanner = <View style={styles.rateBanner}>
-    <Text style={styles.rateText}>Latest daily USD/INR reference rate: {quote ? `1 USD = INR ${quote.exchange_rate}` : 'Load a quote'}. Not continuously live or a guaranteed executable rate.</Text>
-    {quote && <><Text>Provider update: {new Date(quote.provider_updated_at).toLocaleString()}{quote.rate_schedule_overdue ? ' (update overdue; cached reference)' : ''}</Text><Text>3% fee: INR {quote.fee_deducted} · Net INR: {quote.net_amount} · USD payout: {quote.recipient_amount}</Text><Text>{quoteCurrent ? 'Quote expires' : 'Quote expired'}: {new Date(quote.expires_at).toLocaleString()}</Text></>}
-    <Text accessibilityRole="link" {...(Platform.OS === 'web' ? {href:ATTRIBUTION_URL,hrefAttrs:{target:'_blank',rel:'noopener noreferrer'}} : {onPress:() => Linking.openURL(ATTRIBUTION_URL).catch(() => setError('Could not open provider attribution.'))})}>{ATTRIBUTION_TEXT}</Text>
-    <TouchableOpacity onPress={loadQuote} disabled={quoteState.loading || submitting || !!quoteState.pending}><Text style={styles.rateText}>{quoteState.loading ? 'Loading quote...' : quote ? 'Refresh quote' : 'Load quote'}</Text></TouchableOpacity>
-      {appStep > 3 && appStep < 6 && <TouchableOpacity disabled={!quoteCurrent || !!quoteState.pending} onPress={() => flow.accept()}><Text style={styles.rateText}>{quoteState.accepted ? 'Quote accepted' : 'Accept this quote'}</Text></TouchableOpacity>}
-  </View>;
+  const currentRate = quote ? quote.exchange_rate : referenceRate ? referenceRate : null;
+  const rateDisplay = currentRate ? `1 USD = ₹${currentRate}` : 'Loading daily reference rate...';
+  const quoteBanner = (
+    <View style={styles.rateBanner}>
+      <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B6CB0', marginBottom: 4, letterSpacing: 0.5 }}>
+        USD/INR Exchange Rate
+      </Text>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: '#1A365D' }}>
+        {rateDisplay}
+      </Text>
+      {quoteState.loading && <Text style={{ fontSize: 12, color: '#4A5568', marginTop: 2 }}>Updating rate...</Text>}
+    </View>
+  );
+
+  const rateFooter = (
+    <View style={{ marginTop: 12, alignItems: 'center', paddingHorizontal: 8 }}>
+      <Text
+        accessibilityRole="link"
+        style={{ fontSize: 12, color: '#718096', textDecorationLine: 'underline' }}
+        {...(Platform.OS === 'web'
+          ? { href: ATTRIBUTION_URL, hrefAttrs: { target: '_blank', rel: 'noopener noreferrer' } }
+          : { onPress: () => Linking.openURL(ATTRIBUTION_URL).catch(() => setError('Could not open provider attribution.')) })}
+      >
+        {ATTRIBUTION_TEXT}
+      </Text>
+    </View>
+  );
   const notice = <View style={{padding:12,backgroundColor:'#FFF4D6'}}><Text>SIMULATION ONLY - no money moves. Use fictional recipient and payment details.</Text>{loading && <Text>Loading history...</Text>}{submitting && <Text>Recording simulation...</Text>}{!!(error || quoteState.error) && <Text accessibilityRole="alert" style={{color:'#A00000'}}>{error || quoteState.error}</Text>}{quoteState.pending && <TouchableOpacity disabled={submitting} onPress={() => handleTransferSubmit(true)}><Text>Check previous attempt using the original request</Text></TouchableOpacity>}{receipt && <Text>Recorded simulation: {receipt.recipient_amount} {receipt.target_currency}. No funds settled.</Text>}</View>;
   if (isDesktop) {
     return (
-      <SafeAreaView style={styles.desktopContainer}>
+      <SafeAreaView style={[styles.desktopContainer, Platform.OS === 'web' && { height: '100vh', maxHeight: '100vh', overflow: 'hidden' }]}>
         <View style={styles.desktopSidebar}>
           <View>
             <Image source={require('../assets/logo1.png')} style={styles.desktopLogo} />
@@ -149,7 +250,7 @@ export default function DashboardScreen({ navigation }) {
                   <View style={styles.bannerTopRow}>
                     <View style={styles.profileInfo}>
                       <View style={styles.avatarPlaceholder}><Text style={styles.avatarText}>🧑</Text></View>
-                      <Text style={styles.greetingText}>Hi, demo user</Text>
+                      <Text style={styles.greetingText}>Hi, {displayName}</Text>
                     </View>
                   </View>
                   <View style={styles.bannerBalanceCenter}>
@@ -233,11 +334,23 @@ export default function DashboardScreen({ navigation }) {
                       </View>
                       <View style={styles.summaryCard}>
                         <View style={styles.summaryRow}><Text style={styles.summaryText}>Amount sent</Text><Text style={styles.summaryTextBold}>₹ {formatNum(rawInr)}</Text></View>
-                        <View style={styles.summaryRow}><Text style={styles.summaryText}>ZettaRemit fee (3%)</Text><Text style={styles.textRed}>- ₹ {formatNum(feeAmount)}</Text></View>
+                        <View style={styles.summaryRow}><Text style={styles.summaryText}>ZettaRemit fee (3%)</Text><Text style={styles.textRed}>- ₹ {quote ? formatNum(quote.fee_deducted) : formatNum(feeAmount)}</Text></View>
+                        <View style={styles.summaryRow}><Text style={styles.summaryText}>Net INR</Text><Text style={styles.summaryTextBold}>₹ {quote ? formatNum(quote.net_amount) : formatNum(convertedInr)}</Text></View>
                         <View style={styles.summaryDivider} />
-                        <View style={styles.summaryRow}><Text style={styles.summaryText}>Converted amount</Text><Text style={styles.textGreenLg}>$ {formatNum(receiveAmountUsd)}</Text></View>
+                        <View style={styles.summaryRow}><Text style={styles.summaryText}>Converted amount (USD payout)</Text><Text style={styles.textGreenLg}>$ {quote ? formatNum(quote.recipient_amount) : formatNum(receiveAmountUsd)}</Text></View>
+                        <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#EDF2F7', flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                          <Text style={{ fontSize: 12, color: '#718096' }}>
+                            3% fee: INR {quote ? quote.fee_deducted : formatNum(feeAmount)} · Net INR: {quote ? quote.net_amount : formatNum(convertedInr)} · USD payout: {quote ? quote.recipient_amount : formatNum(receiveAmountUsd)}
+                          </Text>
+                          {quote && (
+                            <Text style={{ fontSize: 12, color: quoteCurrent ? '#718096' : '#C53030' }}>
+                              {quoteCurrent ? 'Quote expires' : 'Quote expired'}: {new Date(quote.expires_at).toLocaleTimeString()}
+                            </Text>
+                          )}
+                        </View>
                       </View>
-                      <TouchableOpacity style={styles.primaryButton} onPress={acceptQuote} disabled={!quoteCurrent || quoteState.loading || !!quoteState.pending}><Text style={styles.primaryButtonText}>Accept quote and proceed</Text></TouchableOpacity>
+                      <TouchableOpacity style={[styles.primaryButton, !canProceed && styles.buttonDisabled]} onPress={handleStep3Proceed} disabled={!canProceed}><Text style={styles.primaryButtonText}>Proceed</Text></TouchableOpacity>
+                      {rateFooter}
                     </View>
                   )}
 
@@ -271,6 +384,8 @@ export default function DashboardScreen({ navigation }) {
                       <TouchableOpacity style={[styles.primaryButton, (!paymentMethod || (paymentMethod === 'upi' && !isUpiVerified)) && styles.buttonDisabled]} onPress={handleProceedFromPayment} disabled={!canSubmit || !paymentMethod || (paymentMethod === 'upi' && !isUpiVerified)}>
                         <Text style={styles.primaryButtonText}>Proceed</Text>
                       </TouchableOpacity>
+                      
+                      {rateFooter}
                     </View>
                   )}
 
@@ -285,9 +400,11 @@ export default function DashboardScreen({ navigation }) {
                       <TextInput style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
                       <TextInput style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
                       <TextInput style={styles.inputBox} placeholder="IFSC Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
-                      <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleTransferSubmit} disabled={!canSubmit || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
+                      <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleIndianBankSubmit} disabled={!canProceed || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
                         <Text style={styles.primaryButtonText}>Pay ₹ {formatNum(rawInr)} Securely</Text>
                       </TouchableOpacity>
+                      
+                      {rateFooter}
                     </View>
                   )}
 
@@ -340,7 +457,7 @@ export default function DashboardScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>{notice}
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { height: '100vh', maxHeight: '100vh', overflow: 'hidden' }]}>{notice}
       <StatusBar barStyle={appStep === 1 ? "light-content" : "dark-content"} backgroundColor={appStep === 1 ? "#003DA5" : "#FFFFFF"} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollWrapper} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
@@ -351,7 +468,7 @@ export default function DashboardScreen({ navigation }) {
                 <View style={styles.headerTopRow}>
                   <View style={styles.profileInfo}>
                     <Image source={require('../assets/logo1.png')} style={styles.mobileAvatarPlaceholder} />
-                    <Text style={styles.greetingText}>Hi, demo user</Text>
+                    <Text style={styles.greetingText}>Hi, {displayName}</Text>
                   </View>
                 </View>
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -444,11 +561,23 @@ export default function DashboardScreen({ navigation }) {
                   <View style={styles.summaryCard}>
                     <Text style={styles.summaryTitle}>Transfer Summary</Text>
                     <View style={styles.summaryRow}><Text style={styles.summaryText}>Amount sent</Text><Text style={styles.summaryTextBold}>₹ {formatNum(rawInr)}</Text></View>
-                    <View style={styles.summaryRow}><Text style={styles.summaryText}>ZettaRemit fee (3%)</Text><Text style={styles.textRed}>- ₹ {formatNum(feeAmount)}</Text></View>
+                    <View style={styles.summaryRow}><Text style={styles.summaryText}>ZettaRemit fee (3%)</Text><Text style={styles.textRed}>- ₹ {quote ? formatNum(quote.fee_deducted) : formatNum(feeAmount)}</Text></View>
+                    <View style={styles.summaryRow}><Text style={styles.summaryText}>Net INR</Text><Text style={styles.summaryTextBold}>₹ {quote ? formatNum(quote.net_amount) : formatNum(convertedInr)}</Text></View>
                     <View style={styles.summaryDivider} />
-                    <View style={styles.summaryRow}><Text style={styles.summaryText}>Converted amount</Text><View style={{alignItems: 'flex-end'}}><Text style={styles.textGreenLg}>$ {formatNum(receiveAmountUsd)}</Text><Text style={styles.summarySubText}>(₹ {formatNum(convertedInr)})</Text></View></View>
+                    <View style={styles.summaryRow}><Text style={styles.summaryText}>Converted amount (USD payout)</Text><View style={{alignItems: 'flex-end'}}><Text style={styles.textGreenLg}>$ {quote ? formatNum(quote.recipient_amount) : formatNum(receiveAmountUsd)}</Text><Text style={styles.summarySubText}>(₹ {quote ? formatNum(quote.net_amount) : formatNum(convertedInr)})</Text></View></View>
+                    <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#EDF2F7', flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                      <Text style={{ fontSize: 12, color: '#718096' }}>
+                        3% fee: INR {quote ? quote.fee_deducted : formatNum(feeAmount)} · Net INR: {quote ? quote.net_amount : formatNum(convertedInr)} · USD payout: {quote ? quote.recipient_amount : formatNum(receiveAmountUsd)}
+                      </Text>
+                      {quote && (
+                        <Text style={{ fontSize: 12, color: quoteCurrent ? '#718096' : '#C53030' }}>
+                          {quoteCurrent ? 'Quote expires' : 'Quote expired'}: {new Date(quote.expires_at).toLocaleTimeString()}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                  <TouchableOpacity style={styles.primaryButton} onPress={acceptQuote} disabled={!quoteCurrent || quoteState.loading || !!quoteState.pending}><Text style={styles.primaryButtonText}>Accept quote and proceed</Text></TouchableOpacity>
+                  <TouchableOpacity style={[styles.primaryButton, !canProceed && styles.buttonDisabled]} onPress={handleStep3Proceed} disabled={!canProceed}><Text style={styles.primaryButtonText}>Proceed</Text></TouchableOpacity>
+                  {rateFooter}
                 </View>
               )}
 
@@ -480,6 +609,8 @@ export default function DashboardScreen({ navigation }) {
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.primaryButton, (!paymentMethod || (paymentMethod === 'upi' && !isUpiVerified)) && styles.buttonDisabled]} onPress={handleProceedFromPayment} disabled={!canSubmit || !paymentMethod || (paymentMethod === 'upi' && !isUpiVerified)}><Text style={styles.primaryButtonText}>Proceed</Text></TouchableOpacity>
+                  
+                  {rateFooter}
                 </View>
               )}
 
@@ -494,9 +625,11 @@ export default function DashboardScreen({ navigation }) {
                   <TextInput style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
                   <TextInput style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
                   <TextInput style={styles.inputBox} placeholder="IFSC Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
-                  <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleTransferSubmit} disabled={!canSubmit || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
+                  <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleIndianBankSubmit} disabled={!canProceed || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
                     <Text style={styles.primaryButtonText}>Pay ₹ {formatNum(rawInr)} Securely</Text>
                   </TouchableOpacity>
+                  
+                  {rateFooter}
                 </View>
               )}
 

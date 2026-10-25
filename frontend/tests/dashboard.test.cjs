@@ -58,22 +58,25 @@ test('mobile retains keyboard/scroll hierarchy and every existing wizard/history
 });
 test('desktop and mobile quote views display server amounts, dates, expiry and linked attribution',async()=>{
   const quote=await fixture.quote({recipient_name:'Synthetic',gross_amount:'1000.00'});
-  for(const width of [375,1280])for(const step of [3,4,5]){
-    const root=render(width,step,{quote,accepted:true});const content=text(root).replace(/\s+/g,' ');
-    assert.match(content,/daily USD\/INR reference/);assert.match(content,/Not continuously live/);
-    assert.match(content,/90\.00000000/);assert.match(content,/3% fee: INR 30\.00/);
-    assert.match(content,/Net INR: 970\.00/);assert.match(content,/USD payout: 10\.78/);
-    assert.match(content,/Provider update/);assert.match(content,/Quote expires/);
-    const link=nodes(root).find(node=>node.props.accessibilityRole==='link');
-    assert.equal(link.props.href,'https://www.exchangerate-api.com');
-    assert.match(text(link),/Rates By Exchange Rate API/);
+  for(const width of [375,1280]){
+    const step3=render(width,3,{quote,accepted:true});const content3=text(step3).replace(/\s+/g,' ');
+    assert.match(content3,/90\.00000000/);assert.match(content3,/3% fee: INR 30\.00/);
+    assert.match(content3,/Net INR: 970\.00/);assert.match(content3,/USD payout: 10\.78/);
+    assert.match(content3,/Quote expires/);
+    for(const step of [3,4,5]){
+      const root=render(width,step,{quote,accepted:true});const content=text(root).replace(/\s+/g,' ');
+      assert.match(content,/90\.00000000/);
+      const link=nodes(root).find(node=>node.props.accessibilityRole==='link');
+      assert.equal(link.props.href,'https://www.exchangerate-api.com');
+      assert.match(text(link),/Rates By Exchange Rate API/);
+    }
   }
 });
 test('missing and expired quotes disable accept on desktop and mobile',async()=>{
   const quote=await fixture.quote({recipient_name:'Synthetic',gross_amount:'1000.00'});
   for(const width of [375,1280])for(const state of [{},{quote,expired:true}]){
     const root=render(width,3,state);
-    const button=nodes(root).find(node=>node.type==='TouchableOpacity'&&text(node)==='Accept quote and proceed');
+    const button=nodes(root).find(node=>node.type==='TouchableOpacity'&&(text(node)==='Proceed'||text(node)==='Accept quote and proceed'));
     assert.equal(button.props.disabled,true);
   }
 });
