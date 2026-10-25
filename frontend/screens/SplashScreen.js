@@ -1,14 +1,30 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, StatusBar, Image } from 'react-native';
+import api from '../lib/api';
 
 export default function SplashScreen({ navigation }) {
   
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Welcome');
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const sess = await api.session();
+        if (active) {
+          if (sess && sess.token) {
+            navigation.replace('Dashboard');
+          } else {
+            navigation.replace('Welcome');
+          }
+        }
+      } catch (_) {
+        if (active) navigation.replace('Welcome');
+      }
     }, 2500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [navigation]);
 
   return (

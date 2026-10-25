@@ -21,7 +21,7 @@ export default function App() {
   return (
     <NavigationContainer ref={navigationRef}>
       {/* initialRouteName forces the app to boot up on the Splash screen */}
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false, cardStyle: { flex: 1, overflow: 'hidden' } }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />

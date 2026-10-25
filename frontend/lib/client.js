@@ -57,7 +57,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
       try {
         const data = await request('/users/login', { method:'POST', body:{email:email.trim().toLowerCase(),password}, authenticated:false });
         if (typeof data.access_token !== 'string' || !Number.isFinite(data.expires_in) || data.expires_in <= 0) throw new Error('Invalid sign-in response.');
-        await storage.set({token:data.access_token,expiresAt:Date.now()+data.expires_in*1000});
+        await storage.set({token:data.access_token,expiresAt:Date.now()+data.expires_in*1000,fullName:data.full_name});
         return {full_name:data.full_name};
       } catch (err) {
         if (err.code === 'NETWORK') {
@@ -73,6 +73,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     quote: body => request('/simulation/quote',{method:'POST',body}),
     transfer: (body,key) => request('/transactions/create',{method:'POST',body,key}),
     config: () => request('/simulation/config',{authenticated:false}),
+    session: () => storage.get(),
     async logout() { await storage.clear(); onUnauthorized(); }
   };
 }

@@ -34,6 +34,7 @@ export default function WelcomeScreen({ navigation }) {
           style={styles.primaryButton} 
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Login')}
+          accessibilityRole="button"
         >
           <Text style={styles.primaryButtonText}>Login</Text>
         </TouchableOpacity>
@@ -42,6 +43,7 @@ export default function WelcomeScreen({ navigation }) {
           style={styles.secondaryButton} 
           activeOpacity={0.85}
           onPress={() => navigation.navigate('SignupWizard')}
+          accessibilityRole="button"
         >
           <Text style={styles.secondaryButtonText}>Sign-up</Text>
         </TouchableOpacity>

@@ -6,17 +6,39 @@ let memory = null;
 const listeners = new Set();
 const storage = {
   async get() {
-    if (Platform.OS === 'web') return memory;
+    if (Platform.OS === 'web') {
+      if (!memory && typeof window !== 'undefined' && window.sessionStorage) {
+        try {
+          const item = window.sessionStorage.getItem('zettaremit-session');
+          if (item) memory = JSON.parse(item);
+        } catch (_) {}
+      }
+      return memory;
+    }
     try { return JSON.parse(await SecureStore.getItemAsync('zettaremit-session')); }
     catch (_) { return null; }
   },
   async set(value) {
-    if (Platform.OS === 'web') memory = value; // Web bearer tokens never persisted to browser storage.
+    if (Platform.OS === 'web') {
+      memory = value;
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        try {
+          if (value) window.sessionStorage.setItem('zettaremit-session', JSON.stringify(value));
+          else window.sessionStorage.removeItem('zettaremit-session');
+        } catch (_) {}
+      }
+    }
     else await SecureStore.setItemAsync('zettaremit-session', JSON.stringify(value));
   },
   async clear() {
     memory = null;
-    if (Platform.OS !== 'web') await SecureStore.deleteItemAsync('zettaremit-session');
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        try { window.sessionStorage.removeItem('zettaremit-session'); } catch (_) {}
+      }
+    } else {
+      await SecureStore.deleteItemAsync('zettaremit-session');
+    }
   }
 };
 let client;
@@ -36,5 +58,6 @@ export default {
   quote: (...args) => getClient().quote(...args),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
-  logout: () => getClient().logout()
+  logout: () => getClient().logout(),
+  session: () => getClient().session()
 };

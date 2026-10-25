@@ -22,6 +22,11 @@ export default function RegistrationWizard({ navigation }) {
 
   const [kycType, setKycType] = useState('PAN Card');
   const [kycNumber, setKycNumber] = useState('');
+  const [error, setError] = useState('');
+
+  function showAlert(title, message) {
+    Alert.alert(title, message);
+  }
 
   async function nextStep() {
     // 1. Validate Step 1
@@ -32,15 +37,31 @@ export default function RegistrationWizard({ navigation }) {
       }
     }
 
+    if (currentStep === 4) {
+      if (!fullName || !fullName.trim()) {
+        setError("Please enter your name.");
+        showAlert("Missing Info", "Please enter your name.");
+        return;
+      }
+    }
+
     // 2. The Final Step: Send data to MySQL
     if (currentStep === 7) {
+      if (!fullName || !fullName.trim()) {
+        setError("Please enter your name.");
+        showAlert("Missing Info", "Please enter your name.");
+        return;
+      }
       if (loading) return;
       setLoading(true);
       try {
-        await api.register({full_name: fullName.trim() || "Demo User", email: emailPhone.trim().toLowerCase(), password});
+        await api.register({full_name: fullName.trim(), email: emailPhone.trim().toLowerCase(), password});
         setPassword('');
         setCurrentStep(8);
-      } catch (error) { Alert.alert('Registration failed', error.message); }
+      } catch (err) {
+        setError(err.message);
+        showAlert('Registration failed', err.message);
+      }
       finally { setLoading(false); }
       return;
     }
@@ -180,6 +201,11 @@ export default function RegistrationWizard({ navigation }) {
                     <View>
                       <Text style={styles.mainTitle}>Add your personal info</Text>
                       <Text style={styles.subLabelText}>Ensure this matches your legal identity documents exactly</Text>
+                      {!!error && (
+                        <View style={{ backgroundColor: '#FED7D7', borderWidth: 1, borderColor: '#FEB2B2', borderRadius: 8, padding: 12, marginBottom: 16 }} accessibilityRole="alert">
+                          <Text style={{ color: '#C53030', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{error}</Text>
+                        </View>
+                      )}
                       <TextInput style={styles.formInputBox} placeholder="Full Legal Name" placeholderTextColor="#A0AEC0" value={fullName} onChangeText={setFullName} />
                       <TextInput style={styles.formInputBox} placeholder="Date of Birth (DD/MM/YYYY)" placeholderTextColor="#A0AEC0" value={dob} onChangeText={setDob} />
                       <TextInput style={styles.formInputBox} placeholder="Nationality" placeholderTextColor="#A0AEC0" value={nationality} onChangeText={setNationality} />
@@ -263,7 +289,7 @@ export default function RegistrationWizard({ navigation }) {
                 </View>
 
                 <View style={styles.footerContainer}>
-                  <TouchableOpacity style={styles.primaryActionButton} activeOpacity={0.9} onPress={nextStep} disabled={loading}>
+                  <TouchableOpacity style={styles.primaryActionButton} activeOpacity={0.9} onPress={nextStep} disabled={loading} accessibilityRole="button">
                     <Text style={styles.primaryActionButtonText}>
                       {
                         currentStep === 6 ? "Link KYC Document" :
