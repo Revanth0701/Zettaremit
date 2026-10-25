@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, Image, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 // Session handling is centralized and never trusts stored user IDs.
 import api from '../lib/api';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= 768;
 
@@ -13,13 +14,17 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const handleLogin = async () => {
     if (loading) return;
+    setError('');
     setLoading(true);
     try {
       await api.login(email, password);
       setPassword('');
       navigation.reset({ index:0, routes:[{name:'Dashboard'}] });
-    } catch (error) { Alert.alert('Sign in failed', error.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message || 'Incorrect email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,13 +57,22 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.mainTitle}>Welcome Back</Text>
                 <Text style={styles.subTitle}>Hello there, sign in to continue</Text>
 
+                {!!error && (
+                  <View style={styles.errorContainer} accessibilityRole="alert">
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                )}
+
                 <Text style={styles.inputLabel}>Email Address/Phone Number</Text>
                 <TextInput 
                   style={styles.inputBox} 
                   placeholder="Email/Phone" 
                   placeholderTextColor="#A0AEC0"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (error) setError('');
+                  }}
                   autoCapitalize="none"
                   keyboardType="email-address"
                 />
@@ -70,7 +84,10 @@ export default function LoginScreen({ navigation }) {
                   placeholderTextColor="#A0AEC0"
                   secureTextEntry
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (error) setError('');
+                  }}
                 />
 
                 <TouchableOpacity style={styles.forgotBtn}>
@@ -124,6 +141,22 @@ const styles = StyleSheet.create({
   mobileLogo: { color: '#0047AB', fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 32 },
   mainTitle: { fontSize: 24, fontWeight: '700', color: '#1A202C', marginBottom: 6 },
   subTitle: { fontSize: 14, color: '#718096', marginBottom: 28 },
+  errorContainer: {
+    backgroundColor: '#FFF5F5',
+    borderColor: '#FEB2B2',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#C53030',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
   inputLabel: { fontSize: 13, color: '#4A5568', fontWeight: '600', marginBottom: 6 },
   inputBox: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 14, fontSize: 15, backgroundColor: '#FFFFFF', marginBottom: 16, color: '#1A202C' },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 24 },

@@ -2,7 +2,9 @@ import uuid
 import datetime
 import urllib.request
 import json
+from decimal import Decimal
 from typing import Generator, Optional
+from functools import lru_cache
 from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, Numeric, DateTime, Boolean, ForeignKey, UniqueConstraint
@@ -16,12 +18,14 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.exceptions import RequestValidationError
 from auth import issue_access_token, token_subject, unauthorized, ACCESS_TOKEN_SECONDS
-from money import TransferRequest, fingerprint, RATE
+from money import TransferRequest, submission_fingerprint, RATE
 from internal_service import calculate_transfer, ServiceUnavailable
 from settings import setting, production
 from rate_limit import limiter
+from exchange_rates import ExchangeRateProvider, RateUnavailable
+from quotes import issue_quote, validate_quote, InvalidQuote
 from api_responses import (HealthResponse, RegistrationResponse, LoginResponse,
-                           TransactionResponse, TransactionCreatedResponse)
+                           TransactionResponse, TransactionCreatedResponse, QuoteResponse)
 
 # ==========================================
 # 1. PYDANTIC SCHEMAS (Data Validation)
@@ -59,7 +63,9 @@ class UserLogin(BaseModel):
     email: EmailStr = Field(max_length=150)
     password: str = Field(max_length=1024)
 
-TransactionCreate = TransferRequest
+class TransactionCreate(TransferRequest):
+    # Omission is accepted ONLY for replaying an already committed legacy row.
+    quote_token: Optional[str] = Field(default=None, min_length=1, max_length=8192)
 
 # ==========================================
 # 2. DATABASE CONNECTION
@@ -205,6 +211,25 @@ def health():
 def simulation_config():
     return {"source_currency": "INR", "target_currency": "USD", "inr_per_usd": str(RATE), "fee_percent": "3", "simulation": True}
 
+
+@lru_cache(maxsize=1)
+def get_exchange_rate_provider():
+    # Lazy, process-local cache; construction performs no network requests.
+    return ExchangeRateProvider()
+
+
+@app.post("/simulation/quote", response_model=QuoteResponse)
+def simulation_quote(txn: TransferRequest, current_user: User = Depends(get_current_user),
+                     provider: ExchangeRateProvider = Depends(get_exchange_rate_provider)):
+    limiter.check(("quote", current_user.user_id), limit=10)
+    try:
+        snapshot = provider.get_rate()
+        quote_id = "QUOTE-" + uuid.uuid4().hex
+        calculation = calculate_transfer(current_user.user_id, txn, quote_id, rate=snapshot.inr_per_usd)
+        return issue_quote(current_user.user_id, txn, snapshot, calculation, quote_id)
+    except (RateUnavailable, ServiceUnavailable, InvalidQuote):
+        raise HTTPException(status_code=503, detail="Simulation quote unavailable; please try again later") from None
+
 # ==========================================
 # 5. API ROUTES
 # ==========================================
@@ -276,7 +301,7 @@ def create_transaction(txn: TransactionCreate, sender_id: Optional[str] = None,
                        current_user: User = Depends(get_current_user),
                        db: Session = Depends(get_db)):
     check_requested_sender(sender_id, current_user)
-    request_hash = fingerprint(txn)
+    request_hash = submission_fingerprint(txn)
 
     def prior():
         record = db.query(TransactionRecord).filter(TransactionRecord.sender_id == current_user.user_id).filter(TransactionRecord.idempotency_key == idempotency_key).first()
@@ -287,14 +312,24 @@ def create_transaction(txn: TransactionCreate, sender_id: Optional[str] = None,
     existing = prior()
     if existing:
         return {"message": "Simulated transfer already recorded", "transaction": existing}
+    if txn.quote_token is None:
+        raise HTTPException(status_code=422, detail="A server-issued accepted quote is required")
     try:
-        quote = calculate_transfer(current_user.user_id, txn, idempotency_key)
+        accepted = validate_quote(txn.quote_token, current_user.user_id, txn)
+        verified = calculate_transfer(current_user.user_id, txn, idempotency_key, rate=Decimal(accepted.exchange_rate))
+        if verified != {"feeDeducted": Decimal(accepted.fee_deducted), "netAmount": Decimal(accepted.net_amount),
+                        "recipientAmount": Decimal(accepted.recipient_amount), "exchangeRate": Decimal(accepted.exchange_rate)}:
+            raise ServiceUnavailable()
+        # Java may take time: an expired uncommitted quote must not be recorded.
+        accepted = validate_quote(txn.quote_token, current_user.user_id, txn)
+    except InvalidQuote:
+        raise HTTPException(status_code=422, detail="Invalid or expired simulation quote; request a new quote") from None
     except ServiceUnavailable:
         raise HTTPException(status_code=503, detail="Simulation service unavailable; retry with the same idempotency key") from None
     record = TransactionRecord(transaction_id="TXN-" + uuid.uuid4().hex.upper(), sender_id=current_user.user_id,
         recipient_name=txn.recipient_name, gross_amount=txn.gross_amount,
-        fee_deducted=quote["feeDeducted"], net_amount=quote["netAmount"], exchange_rate=quote["exchangeRate"],
-        recipient_amount=quote["recipientAmount"], source_currency="INR", target_currency="USD",
+        fee_deducted=Decimal(accepted.fee_deducted), net_amount=Decimal(accepted.net_amount), exchange_rate=Decimal(accepted.exchange_rate),
+        recipient_amount=Decimal(accepted.recipient_amount), source_currency=accepted.source_currency, target_currency=accepted.target_currency,
         status="SIMULATED", idempotency_key=idempotency_key, request_hash=request_hash)
     db.add(record)
     try:

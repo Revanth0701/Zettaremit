@@ -152,8 +152,14 @@ class AuthenticationTests(unittest.TestCase):
         from decimal import Decimal
         self.db.query.side_effect = lambda model: Query([self.alice,self.bob] if model is self.api.User else [])
         quote = dict(feeDeducted=Decimal("3"),netAmount=Decimal("97"),exchangeRate=Decimal("83.5"),recipientAmount=Decimal("1.16"))
+        from exchange_rates import RateSnapshot
+        from money import TransferRequest
+        import quotes
+        now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+        snapshot=RateSnapshot(Decimal('83.50000000'),now-datetime.timedelta(hours=12),now+datetime.timedelta(hours=12),now,now+datetime.timedelta(hours=84))
+        accepted=quotes.issue_quote(self.alice.user_id,TransferRequest(recipient_name='Synthetic',gross_amount='100.00'),snapshot,quote,'QUOTE-'+'a'*32)
         with patch.object(self.api,'calculate_transfer',return_value=quote):
-            result=self.client.post('/transactions/create',headers={**self.headers(),'Idempotency-Key':'synthetic-key-00001'},json={'recipient_name':'Synthetic','gross_amount':'100.00'})
+            result=self.client.post('/transactions/create',headers={**self.headers(),'Idempotency-Key':'synthetic-key-00001'},json={'recipient_name':'Synthetic','gross_amount':'100.00','quote_token':accepted.quote_token})
         self.assertEqual(result.status_code,201)
         self.assertEqual(result.json()['transaction']['sender_id'],'USR-ALICE')
         self.assertEqual(self.db.add.call_args.args[0].sender_id,'USR-ALICE')
