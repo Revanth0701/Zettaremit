@@ -152,6 +152,15 @@ export default function DashboardScreen({ navigation }) {
     if (quote?.exchange_rate) setReferenceRate(quote.exchange_rate);
   }, [quote]);
 
+  const [aiEnabled, setAiEnabled] = useState(false);
+  useEffect(() => {
+    if (typeof api.aiHealth === 'function') {
+      api.aiHealth().then(h => {
+        if (h && h.status === 'ok') setAiEnabled(true);
+      }).catch(() => {});
+    }
+  }, []);
+
   // Debounced auto-quote on valid amount & recipient change
   useEffect(() => {
     if (!recipient.trim() || !sendAmountInr) return;
@@ -230,6 +239,12 @@ export default function DashboardScreen({ navigation }) {
                 <Text style={styles.navIcon}>📋</Text>
                 <Text style={[styles.navText, appStep === 7 && styles.navTextActive]}>History</Text>
               </TouchableOpacity>
+              {aiEnabled && (
+                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AIAssistant')}>
+                  <Text style={styles.navIcon}>🤖</Text>
+                  <Text style={styles.navText}>AI Assistant</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <TouchableOpacity style={styles.logoutButton} onPress={() => {
@@ -271,6 +286,12 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.desktopActionIcon}>📋</Text>
                     <Text style={styles.desktopActionText}>Transaction{"\n"}History</Text>
                   </TouchableOpacity>
+                  {aiEnabled && (
+                    <TouchableOpacity style={styles.desktopActionCard} onPress={() => navigation.navigate('AIAssistant')}>
+                      <Text style={styles.desktopActionIcon}>🤖</Text>
+                      <Text style={styles.desktopActionText}>AI Assistant</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <View style={styles.desktopHistoryContainer}>
@@ -518,6 +539,12 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.navTabIconActive}>🏠</Text>
                     <Text style={styles.navTabTextActive}>Home</Text>
                  </TouchableOpacity>
+                 {aiEnabled && (
+                   <TouchableOpacity style={styles.navTab} onPress={() => navigation.navigate('AIAssistant')}>
+                      <Text style={styles.navTabIcon}>🤖</Text>
+                      <Text style={styles.navTabText}>AI</Text>
+                   </TouchableOpacity>
+                 )}
                  <View style={styles.navTab}>
                     <Text style={styles.navTabIcon}>👤</Text>
                  </View>

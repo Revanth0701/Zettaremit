@@ -357,3 +357,14 @@ def get_transactions(sender_id: Optional[str] = None,
                      .order_by(TransactionRecord.created_at.desc())\
                      .limit(limit).all()
     return transactions
+
+# --- OPTIONAL AI ASSISTANT ROUTER ---
+# Disabled by default. Only enabled when ENABLE_AI_ASSISTANT is explicitly set to true.
+if setting("ENABLE_AI_ASSISTANT", "false").lower() == "true":
+    try:
+        from ai.router import ai_router
+        app.include_router(ai_router)
+    except Exception as exc:
+        import logging
+        logging.getLogger("uvicorn.error").error("Failed to register AI assistant router: %s", exc)
+

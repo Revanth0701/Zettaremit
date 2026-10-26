@@ -8,6 +8,7 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegistrationWizard from './screens/RegistrationWizard';
 import DashboardScreen from './screens/DashboardScreen';
+import AIAssistantScreen from './screens/AIAssistantScreen';
 
 import { onUnauthorized } from './lib/api';
 const navigationRef = createNavigationContainerRef();
@@ -27,6 +28,7 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignupWizard" component={RegistrationWizard} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        <Stack.Screen name="AIAssistant" component={AIAssistantScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -34,3 +34,13 @@ services:
         sync: false
       - key: AIVEN_CA_PATH
         value: /etc/secrets/aiven-ca.pem
+      - key: ENABLE_AI_ASSISTANT
+        value: "false"
+      - key: AI_PROVIDER
+        value: ollama_cloud
+      - key: AI_RETRIEVER
+        value: bm25
+      - key: OLLAMA_CLOUD_MODEL
+        value: gemma4:31b
+      - key: OLLAMA_API_KEY
+        sync: false

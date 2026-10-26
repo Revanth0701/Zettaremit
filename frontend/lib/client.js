@@ -6,7 +6,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
   const loopback = ['localhost','127.0.0.1','[::1]'].includes(parsed.hostname);
   const valid = clean && (parsed.protocol === 'https:' || (allowHttp && loopback && parsed.protocol === 'http:'));
   if (!valid) throw new Error('Configure a valid HTTPS API base URL (loopback HTTP only for development).');
-  async function request(path, { method = 'GET', body, authenticated = true, key } = {}) {
+  async function request(path, { method = 'GET', body, authenticated = true, key, timeoutMs } = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (authenticated) {
       const session = await storage.get();
@@ -18,10 +18,17 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     if (key) headers['Idempotency-Key'] = key;
     let response;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
+    const timeout = timeoutMs || 15000;
+    const timer = setTimeout(() => controller.abort(), timeout);
     try {
       response = await fetchImpl(baseUrl.replace(/\/$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
-    } catch (_) {
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        const error = new Error('The request timed out. Please try again.');
+        error.code = 'TIMEOUT';
+        error.status = 504;
+        throw error;
+      }
       const error = new Error('Network request could not complete. Retry using the same request.');
       error.code = 'NETWORK'; throw error;
     }
@@ -46,7 +53,14 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
       if (path === '/simulation/quote' && response.status === 503) messages[503] = 'Daily reference rates or the quote service are unavailable. Please try again later.';
       if (path === '/transactions/create' && response.status === 422) messages[422] = 'The quote is invalid or expired. Review a new quote before trying again.';
       if (path === '/users/login' && response.status === 422) messages[422] = 'Incorrect email or password. Please try again.';
-      const error = new Error(messages[response.status] || 'The request could not be completed.');
+      if (path === '/ai/ask') {
+        if (response.status === 429) messages[429] = 'The AI assistant is busy processing another query. Please wait a moment and retry.';
+        if (response.status === 503) messages[503] = 'The local AI service is currently unavailable. Ensure Ollama is running.';
+        if (response.status === 504) messages[504] = 'The AI request timed out. Please ask a shorter question or retry.';
+        if (response.status === 422) messages[422] = 'Please enter a valid question (up to 1,000 characters).';
+      }
+      const message = (path.startsWith('/ai') && data && typeof data.detail === 'string') ? data.detail : (messages[response.status] || 'The request could not be completed.');
+      const error = new Error(message);
       error.status = response.status; throw error;
     }
     return data;
@@ -73,6 +87,8 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     quote: body => request('/simulation/quote',{method:'POST',body}),
     transfer: (body,key) => request('/transactions/create',{method:'POST',body,key}),
     config: () => request('/simulation/config',{authenticated:false}),
+    aiHealth: () => request('/ai/health',{authenticated:false,timeoutMs:5000}),
+    aiAsk: (question,session_id) => request('/ai/ask',{method:'POST',body:{question,session_id},authenticated:true,timeoutMs:120000}),
     session: () => storage.get(),
     async logout() { await storage.clear(); onUnauthorized(); }
   };

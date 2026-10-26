@@ -58,6 +58,8 @@ export default {
   quote: (...args) => getClient().quote(...args),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
+  aiHealth: () => getClient().aiHealth(),
+  aiAsk: (...args) => getClient().aiAsk(...args),
   logout: () => getClient().logout(),
   session: () => getClient().session()
 };
