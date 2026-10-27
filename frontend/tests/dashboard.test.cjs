@@ -41,12 +41,12 @@ test('dashboard style definitions remain unchanged, including desktop fix and mo
   const styles=source.slice(source.indexOf('const styles = StyleSheet.create(')).replace(/\r\n/g,'\n').replace(/\n+$/,'');
   assert.equal(crypto.createHash('sha256').update(styles).digest('hex'),'d7ac04783677bc359eaae0e406c8d4b9edda7fca4a4a24c7bf390435d0e45b87');
 });
-test('desktop retains left sidebar and main-column simulation notice',()=>{
+test('desktop retains left sidebar and main-column layout without simulation banner',()=>{
   const root=render(1280,1);
   const [sidebar,main]=React.Children.toArray(root.props.children);
   assert.equal(sidebar.props.style.width,250);assert.equal(sidebar.props.style.flexShrink,0);
   assert.equal(main.props.style.flex,1);assert.equal(main.props.style.minWidth,0);
-  assert.match(text(React.Children.toArray(main.props.children)[0]),/SIMULATION ONLY/);
+  assert.doesNotMatch(text(React.Children.toArray(main.props.children)[0]),/SIMULATION ONLY/);
 });
 test('mobile retains keyboard/scroll hierarchy and every existing wizard/history step renders',()=>{
   for(const step of [1,2,3,4,5,6,7]){

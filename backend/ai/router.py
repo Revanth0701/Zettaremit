@@ -1,3 +1,5 @@
+from fastapi.responses import StreamingResponse
+import json
 """FastAPI Router for ZettaRemit AI Assistant (Phase 1, Step 5A).
 
 Provides POST /ai/ask for grounded question answering against the local RAG knowledge base.
@@ -238,6 +240,95 @@ async def ask_assistant_endpoint(
     finally:
         if acquired:
             AI_SEMAPHORE.release()
+
+
+
+@ai_router.post("/ask-stream")
+async def ask_assistant_stream_endpoint(
+    payload: AskRequest,
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
+):
+    """Stream AI assistant response using Server-Sent Events (SSE).
+    
+    Enforces Bearer authentication, per-IP rate limiting, per-user rate limiting,
+    PII sanitization, scoped session isolation, and concurrency semaphore.
+    """
+    # 1. Enforce authentication
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise unauthorized()
+    user_id = token_subject(credentials.credentials)
+
+    # 2. Enforce IP-based rate limiting
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_ip_rate_limit(client_ip):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Maximum 15 questions per minute. Please retry shortly.",
+            headers={"Retry-After": "60"}
+        )
+
+    # 3. Enforce Per-User rate limiting and conservative daily budget
+    allowed, rate_error = check_user_rate_limit(user_id)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=rate_error,
+            headers={"Retry-After": "60"}
+        )
+
+    # 4. Privacy Guardrail: Scrub credentials, JWT tokens, and PII
+    sanitized_question = scrub_sensitive_input(payload.question)
+
+    # 5. Bind session strictly to authenticated user_id
+    scoped_session_id = f"{user_id}::{payload.session_id}" if payload.session_id else f"{user_id}::default"
+
+    # 6. Concurrency guard: wait up to 3.0s for the AI lock
+    try:
+        await asyncio.wait_for(AI_SEMAPHORE.acquire(), timeout=3.0)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="AI assistant is currently busy processing another request. Please retry shortly.",
+            headers={"Retry-After": "5"}
+        )
+
+    service = get_rag_service()
+
+    async def event_generator():
+        try:
+            loop = asyncio.get_running_loop()
+            queue = asyncio.Queue(maxsize=100)
+            sentinel = object()
+
+            def sync_worker():
+                try:
+                    for event in service.answer_stream(sanitized_question, session_id=scoped_session_id):
+                        asyncio.run_coroutine_threadsafe(queue.put(event), loop).result()
+                except Exception as ex:
+                    asyncio.run_coroutine_threadsafe(queue.put({"type": "error", "error": str(ex)}), loop).result()
+                finally:
+                    asyncio.run_coroutine_threadsafe(queue.put(sentinel), loop).result()
+
+            loop.run_in_executor(None, sync_worker)
+
+            while True:
+                item = await queue.get()
+                if item is sentinel:
+                    break
+                yield f"data: {json.dumps(item)}\n\n"
+        finally:
+            AI_SEMAPHORE.release()
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 @ai_router.get("/health")

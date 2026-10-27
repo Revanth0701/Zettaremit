@@ -63,10 +63,10 @@ export default function LoginScreen({ navigation }) {
                   </View>
                 )}
 
-                <Text style={styles.inputLabel}>Email Address/Phone Number</Text>
+                <Text style={styles.inputLabel}>Email Address</Text>
                 <TextInput 
                   style={styles.inputBox} 
-                  placeholder="Email/Phone" 
+                  placeholder="Enter your email address" 
                   placeholderTextColor="#A0AEC0"
                   value={email}
                   onChangeText={(text) => {

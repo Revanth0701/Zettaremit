@@ -6,7 +6,8 @@ providers, API key management, model validation, and structured error handling.
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
+import json
 import httpx
 
 try:
@@ -286,6 +287,102 @@ class OllamaClient:
             fallback_to_local=False
         )
         return local_client.chat(
+            user_message=user_message,
+            system_prompt=system_prompt,
+            history=history,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+
+    def chat_stream(
+        self,
+        user_message: str,
+        system_prompt: Optional[str] = None,
+        history: Optional[list] = None,
+        temperature: float = 0.0,
+        max_tokens: Optional[int] = 512
+    ) -> Generator[str, None, None]:
+        """Stream chat completion tokens from active provider."""
+        url = f"{self.base_url}/api/chat"
+
+        try:
+            headers = self._get_headers()
+        except OllamaAuthenticationError:
+            if self.fallback_to_local:
+                yield from self._fallback_chat_stream(user_message, system_prompt, history, temperature, max_tokens)
+                return
+            raise
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        if history:
+            for item in history:
+                if isinstance(item, dict) and "role" in item and "content" in item:
+                    messages.append({"role": item["role"], "content": item["content"]})
+        messages.append({"role": "user", "content": user_message})
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": temperature
+            }
+        }
+        if max_tokens:
+            payload["options"]["num_predict"] = max_tokens
+
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                with client.stream("POST", url, json=payload, headers=headers) as resp:
+                    if resp.status_code != 200:
+                        resp.read()
+                        self._handle_http_error(httpx.HTTPStatusError("Stream error", request=resp.request, response=resp))
+                    for line in resp.iter_lines():
+                        if not line:
+                            continue
+                        try:
+                            data = json.loads(line)
+                        except Exception:
+                            continue
+                        msg = data.get("message", {})
+                        content = msg.get("content", "")
+                        if content:
+                            yield content
+                        if data.get("done", False):
+                            break
+        except (OllamaError, httpx.HTTPError) as err:
+            if self.fallback_to_local and self.provider == "ollama_cloud":
+                yield from self._fallback_chat_stream(user_message, system_prompt, history, temperature, max_tokens)
+                return
+            if isinstance(err, httpx.ConnectError):
+                raise OllamaConnectionError(
+                    f"Cannot connect to {self.provider} at {self.base_url}."
+                ) from None
+            if isinstance(err, httpx.TimeoutException):
+                raise OllamaTimeoutError(
+                    f"Inference request to {self.provider} timed out after {self.timeout} seconds."
+                ) from None
+            if isinstance(err, httpx.HTTPStatusError):
+                self._handle_http_error(err)
+            raise
+
+    def _fallback_chat_stream(
+        self,
+        user_message: str,
+        system_prompt: Optional[str],
+        history: Optional[list],
+        temperature: float,
+        max_tokens: Optional[int]
+    ) -> Generator[str, None, None]:
+        """Explicitly configured fallback to local Ollama runner stream."""
+        local_client = OllamaClient(
+            provider="local",
+            timeout=self.timeout,
+            fallback_to_local=False
+        )
+        yield from local_client.chat_stream(
             user_message=user_message,
             system_prompt=system_prompt,
             history=history,

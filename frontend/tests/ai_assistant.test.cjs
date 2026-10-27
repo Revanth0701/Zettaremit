@@ -136,3 +136,96 @@ test('client aiAsk sends 120s timeout, propagates detailed AI error messages, an
   assert.deepEqual(result.sources, ['about_zettaremit.md']);
   assert.equal(recordedCalls[3].opts.headers.Authorization, 'Bearer mock-auth-jwt', 'Must attach Bearer auth token');
 });
+
+test('AIAssistantScreen uses professional AI icon and hides technical source filenames', () => {
+  const filePath = path.join(__dirname, '..', 'screens', 'AIAssistantScreen.js');
+  const code = fs.readFileSync(filePath, 'utf8');
+
+  // Must not use robot emoji
+  assert.doesNotMatch(code, /🤖/, 'Robot emoji should be replaced with professional AI icon');
+  assert.match(code, /AssistantIcon/, 'Must use dedicated AssistantIcon component');
+
+  // Must not render raw source filename variables in user-facing message bubbles
+  assert.doesNotMatch(code, /{src}/, 'Technical source filenames (.md) must not be rendered in chat');
+
+  // Must have streaming handler
+  assert.match(code, /aiAskStream/, 'Must implement response streaming via api.aiAskStream');
+});
+
+test('RegistrationWizard displays clean password placeholder and inline validation error for < 12 characters', () => {
+  const filePath = path.join(__dirname, '..', 'screens', 'RegistrationWizard.js');
+  const code = fs.readFileSync(filePath, 'utf8');
+
+  // Clean placeholder without byte jargon
+  assert.match(code, /placeholder="Enter your password"/, 'Password placeholder must be "Enter your password"');
+  assert.doesNotMatch(code, /max 72 bytes/i, 'Placeholder must not display technical byte limit language');
+
+  // Inline validation error message
+  assert.match(code, /Password must be at least 12 characters./, 'Must show clear 12-character validation message');
+  assert.match(code, /inlineErrorContainer/, 'Must render inline error container');
+});
+
+test('client aiAskStream streams chunks progressively, attaches Bearer token, and handles completion', async () => {
+  const chunks = [
+    'data: {"type": "start", "sources": ["about_zettaremit.md"]}\n\n',
+    'data: {"type": "chunk", "content": "Hello "}\n\n',
+    'data: {"type": "chunk", "content": "from ZettaRemit!"}\n\n',
+    'data: {"type": "done", "latency_seconds": 0.4, "sources": ["about_zettaremit.md"]}\n\n'
+  ];
+
+  let streamReadIdx = 0;
+  let requestHeaders = null;
+  const recordedChunks = [];
+
+  const client = createClient({
+    baseUrl: 'https://api.example.com',
+    storage: { get: async () => ({ token: 'mock-stream-jwt', expiresAt: Date.now() + 60000 }), set: async () => {}, clear: async () => {} },
+    fetchImpl: async (url, opts) => {
+      requestHeaders = opts.headers;
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          getReader: () => ({
+            read: async () => {
+              if (streamReadIdx < chunks.length) {
+                const chunkStr = chunks[streamReadIdx++];
+                return { done: false, value: new TextEncoder().encode(chunkStr) };
+              }
+              return { done: true, value: undefined };
+            }
+          })
+        }
+      };
+    }
+  });
+
+  const result = await client.aiAskStream('What is ZettaRemit?', 'session-stream-test', {
+    onChunk: (chunk) => recordedChunks.push(chunk)
+  });
+
+  assert.equal(requestHeaders.Authorization, 'Bearer mock-stream-jwt', 'Must attach Bearer auth token');
+  assert.deepEqual(recordedChunks, ['Hello ', 'from ZettaRemit!'], 'Must invoke onChunk for each incoming chunk');
+  assert.equal(result.answer, 'Hello from ZettaRemit!', 'Must return complete accumulated answer');
+  assert.deepEqual(result.sources, ['about_zettaremit.md'], 'Must track retrieved sources');
+});
+
+test('DashboardScreen and AIAssistantScreen adhere to final professional UI polish standards', () => {
+  const dashPath = path.join(__dirname, '..', 'screens', 'DashboardScreen.js');
+  const dashCode = fs.readFileSync(dashPath, 'utf8');
+
+  // 1. No robot emoji anywhere in Dashboard
+  assert.doesNotMatch(dashCode, /🤖/, 'DashboardScreen must not use robot emoji');
+
+  // 2. No prominent yellow simulation banner #FFF4D6
+  assert.doesNotMatch(dashCode, /FFF4D6/i, 'DashboardScreen must not display large yellow simulation banner');
+
+  // 3. Must use AssistantIcon for AI Assistant entry points
+  assert.match(dashCode, /AssistantIcon/, 'DashboardScreen must use AssistantIcon sparkle medallion');
+
+  // 4. AIAssistantScreen subtitle must be "Your ZettaRemit AI Assistant"
+  const aiPath = path.join(__dirname, '..', 'screens', 'AIAssistantScreen.js');
+  const aiCode = fs.readFileSync(aiPath, 'utf8');
+  assert.match(aiCode, /Your ZettaRemit AI Assistant/, 'AIAssistantScreen must display updated subtitle');
+  assert.doesNotMatch(aiCode, /Official Remittance Support/, 'Old subtitle must be replaced');
+});

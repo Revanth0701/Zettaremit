@@ -16,6 +16,34 @@ import {
 import * as Crypto from 'expo-crypto';
 import api from '../lib/api';
 
+function AssistantIcon({ size = 16, color = '#93C5FD' }) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ display: 'block' }}
+      >
+        <path
+          d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"
+          fill={color}
+        />
+        <path
+          d="M19 16L20.2 19.8L24 21L20.2 22.2L19 26L17.8 22.2L14 21L17.8 19.8L19 16Z"
+          fill={color}
+          opacity="0.85"
+        />
+      </svg>
+    );
+  }
+  return (
+    <Text style={{ color, fontSize: size, fontWeight: '700', lineHeight: size + 2 }}>✦</Text>
+  );
+}
+
 export default function AIAssistantScreen({ navigation }) {
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= 768;
@@ -26,7 +54,7 @@ export default function AIAssistantScreen({ navigation }) {
   // AI Service availability state
   const [isAiAvailable, setIsAiAvailable] = useState(null); // null = checking, true/false
   const [aiStatusMessage, setAiStatusMessage] = useState('');
-  const [providerSubtitle, setProviderSubtitle] = useState('RAG Assistant');
+  const [providerSubtitle, setProviderSubtitle] = useState('Your ZettaRemit AI Assistant');
 
   // Conversation history in component state (never persisted to storage)
   const [messages, setMessages] = useState([
@@ -42,41 +70,58 @@ export default function AIAssistantScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [errorBanner, setErrorBanner] = useState('');
   const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isSendHovered, setIsSendHovered] = useState(false);
 
   const scrollViewRef = useRef(null);
 
-  // Check AI health on mount using existing API configuration
+  // Check authentication and AI health on mount
   useEffect(() => {
     let isMounted = true;
-    async function checkHealth() {
+    async function checkAuthAndHealth() {
+      // 1. Direct route protection: Verify authenticated session
+      try {
+        const session = await api.session();
+        if (!session || !session.token) {
+          if (navigation && typeof navigation.replace === 'function') {
+            navigation.replace('Login');
+            return;
+          }
+        }
+      } catch (err) {
+        if (navigation && typeof navigation.replace === 'function') {
+          navigation.replace('Login');
+          return;
+        }
+      }
+
+      // 2. Health check
       try {
         const health = await api.aiHealth();
         if (isMounted) {
           if (health && health.status === 'ok') {
             setIsAiAvailable(true);
-            const providerName = health.provider === 'ollama_cloud' ? 'Ollama Cloud' : 'Local Ollama';
-            const modelName = health.model || (health.provider === 'ollama_cloud' ? 'gemma4:31b' : 'llama3.2:3b');
-            setAiStatusMessage(`AI Assistant Online (${providerName} • ${modelName})`);
-            setProviderSubtitle(`${providerName} • ${modelName}`);
+            setAiStatusMessage('AI Assistant Online');
+            setProviderSubtitle('Your ZettaRemit AI Assistant');
           } else {
             setIsAiAvailable(false);
             setAiStatusMessage('AI Assistant is currently unavailable on the backend.');
+            setProviderSubtitle('Assistant Offline');
           }
         }
       } catch (err) {
         if (isMounted) {
           setIsAiAvailable(false);
-          setAiStatusMessage(
-            'The AI Assistant operates locally with Ollama and is unavailable in this environment.'
-          );
+          setAiStatusMessage('The AI Assistant is currently offline.');
+          setProviderSubtitle('Assistant Offline');
         }
       }
     }
-    checkHealth();
+    checkAuthAndHealth();
     return () => { isMounted = false; };
-  }, []);
+  }, [navigation]);
 
-  // Timer for CPU generation feedback
+  // Timer for inference feedback
   useEffect(() => {
     let timer;
     if (loading) {
@@ -112,21 +157,82 @@ export default function AIAssistantScreen({ navigation }) {
       text: trimmed
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const aiMessageId = `ai_${Date.now()}`;
+    const initialAiMessage = {
+      id: aiMessageId,
+      role: 'assistant',
+      text: '',
+      sources: []
+    };
+
+    setMessages(prev => [...prev, userMessage, initialAiMessage]);
     setInputQuestion('');
     setLoading(true);
 
+    let receivedStream = false;
+
     try {
-      const response = await api.aiAsk(trimmed, sessionId);
-      const assistantMessage = {
-        id: `ai_${Date.now()}`,
-        role: 'assistant',
-        text: response.answer || 'I could not generate an answer.',
-        sources: response.sources || [],
-        latency: response.latency_seconds
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      if (typeof api.aiAskStream === 'function') {
+        await api.aiAskStream(trimmed, sessionId, {
+          onSources: (srcs) => {
+            setMessages(prev =>
+              prev.map(m => (m.id === aiMessageId ? { ...m, sources: srcs } : m))
+            );
+          },
+          onChunk: (chunk, fullText) => {
+            receivedStream = true;
+            setMessages(prev =>
+              prev.map(m => (m.id === aiMessageId ? { ...m, text: fullText } : m))
+            );
+          },
+          onDone: (result) => {
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === aiMessageId
+                  ? { ...m, text: result.answer || m.text, sources: result.sources || m.sources, latency: result.latency_seconds }
+                  : m
+              )
+            );
+          }
+        });
+      } else {
+        const response = await api.aiAsk(trimmed, sessionId);
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === aiMessageId
+              ? {
+                  ...m,
+                  text: response.answer || 'I could not generate an answer.',
+                  sources: response.sources || [],
+                  latency: response.latency_seconds
+                }
+              : m
+          )
+        );
+      }
     } catch (err) {
+      if (!receivedStream && typeof api.aiAsk === 'function' && err.code !== 'ABORT') {
+        try {
+          const response = await api.aiAsk(trimmed, sessionId);
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === aiMessageId
+                ? {
+                    ...m,
+                    text: response.answer || 'I could not generate an answer.',
+                    sources: response.sources || [],
+                    latency: response.latency_seconds
+                  }
+                : m
+            )
+          );
+          setLoading(false);
+          return;
+        } catch (fallbackErr) {
+          err = fallbackErr;
+        }
+      }
+
       let friendlyError = 'The request could not be completed.';
       if (err.status === 429) {
         friendlyError = 'The AI assistant is busy processing another query. Please wait a moment and retry.';
@@ -140,6 +246,9 @@ export default function AIAssistantScreen({ navigation }) {
         friendlyError = err.message;
       }
       setErrorBanner(friendlyError);
+      if (!receivedStream) {
+        setMessages(prev => prev.filter(m => m.id !== aiMessageId));
+      }
     } finally {
       setLoading(false);
     }
@@ -171,6 +280,7 @@ export default function AIAssistantScreen({ navigation }) {
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
+            activeOpacity={0.8}
           >
             <Text style={styles.backButtonText}>&larr; Back</Text>
           </TouchableOpacity>
@@ -185,16 +295,10 @@ export default function AIAssistantScreen({ navigation }) {
             accessibilityRole="button"
             accessibilityLabel="Clear chat"
             testID="clear_chat_button"
+            activeOpacity={0.8}
           >
             <Text style={[styles.clearButtonText, loading && { opacity: 0.5 }]}>Clear Chat</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Simulation Disclaimer Banner */}
-        <View style={styles.simulationBanner}>
-          <Text style={styles.simulationBannerText}>
-            <Text style={{ fontWeight: '700' }}>SIMULATION ONLY:</Text> ZettaRemit is an educational software simulation and does not move real money or connect to live banking rails.
-          </Text>
         </View>
 
         {/* Status / Error Notifications */}
@@ -233,7 +337,7 @@ export default function AIAssistantScreen({ navigation }) {
               >
                 {msg.role === 'assistant' && (
                   <View style={styles.avatarIcon}>
-                    <Text style={{ fontSize: 16 }}>&#129302;</Text>
+                    <AssistantIcon size={15} color="#93C5FD" />
                   </View>
                 )}
                 <View
@@ -242,44 +346,39 @@ export default function AIAssistantScreen({ navigation }) {
                     msg.role === 'user' ? styles.userBubble : styles.assistantBubble
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.messageText,
-                      msg.role === 'user' ? styles.userMessageText : styles.assistantMessageText
-                    ]}
-                    selectable={true}
-                  >
-                    {msg.text}
-                  </Text>
-
-                  {/* Knowledge Base Source Citations */}
-                  {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
-                    <View style={styles.sourcesContainer}>
-                      <Text style={styles.sourcesLabel}>Sources:</Text>
-                      <View style={styles.sourcePillsRow}>
-                        {msg.sources.map((src, idx) => (
-                          <View key={idx} style={styles.sourcePill}>
-                            <Text style={styles.sourcePillText}>&#128196; {src}</Text>
-                          </View>
-                        ))}
-                      </View>
+                  {msg.role === 'assistant' && loading && !msg.text ? (
+                    <View style={styles.generatingRow}>
+                      <ActivityIndicator size="small" color="#003DA5" />
+                      <Text style={styles.generatingText}>Thinking...</Text>
                     </View>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.messageText,
+                        msg.role === 'user' ? styles.userMessageText : styles.assistantMessageText
+                      ]}
+                      selectable={true}
+                    >
+                      {msg.text}
+                    </Text>
                   )}
                 </View>
               </View>
             ))}
 
-            {/* Loading Indicator when waiting for Ollama */}
-            {loading && (
+            {/* Loading Indicator when awaiting initial response */}
+            {loading && (!messages.length || messages[messages.length - 1].role !== 'assistant') && (
               <View accessible={true} testID="loading_indicator" accessibilityLabel="Generating answer" style={[styles.messageRow, styles.assistantRow]}>
                 <View style={styles.avatarIcon}>
-                  <Text style={{ fontSize: 16 }}>&#129302;</Text>
+                  <AssistantIcon size={15} color="#93C5FD" />
                 </View>
                 <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                  <ActivityIndicator size="small" color="#003DA5" />
-                  <Text style={styles.loadingText}>
-                    Generating grounded answer... ({loadingSeconds}s)
-                  </Text>
+                  <View style={styles.generatingRow}>
+                    <ActivityIndicator size="small" color="#003DA5" />
+                    <Text style={styles.loadingText}>
+                      Generating grounded answer... ({loadingSeconds}s)
+                    </Text>
+                  </View>
                   {loadingSeconds > 25 && (
                     <Text style={styles.loadingSubtext}>
                       Inference in progress. Please wait.
@@ -296,6 +395,8 @@ export default function AIAssistantScreen({ navigation }) {
               testID="chat_input"
               style={[
                 styles.textInput,
+                Platform.OS === 'web' && { outlineStyle: 'none', outline: 'none' },
+                isInputFocused && styles.textInputFocused,
                 (isAiAvailable === false || loading) && styles.textInputDisabled
               ]}
               placeholder={
@@ -306,25 +407,59 @@ export default function AIAssistantScreen({ navigation }) {
               placeholderTextColor="#94A3B8"
               value={inputQuestion}
               onChangeText={setInputQuestion}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               maxLength={1000}
               editable={!loading && isAiAvailable !== false}
               onSubmitEditing={handleSend}
+              onKeyPress={(e) => {
+                if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               returnKeyType="send"
               multiline={false}
             />
-            <TouchableOpacity
-              testID="send_button"
-              style={[
-                styles.sendButton,
-                (!inputQuestion.trim() || loading || isAiAvailable === false) && styles.sendButtonDisabled
-              ]}
-              onPress={handleSend}
-              disabled={!inputQuestion.trim() || loading || isAiAvailable === false}
-              accessibilityRole="button"
-              accessibilityLabel="Send question"
-            >
-              <Text style={styles.sendButtonText}>Send</Text>
-            </TouchableOpacity>
+            {(() => {
+              const isSendDisabled = !inputQuestion.trim() || loading || isAiAvailable === false;
+              return (
+                <TouchableOpacity
+                  testID="send_button"
+                  style={[
+                    styles.sendButton,
+                    isSendDisabled && styles.sendButtonDisabled,
+                    !isSendDisabled && isSendHovered && styles.sendButtonHovered,
+                    Platform.OS === 'web' && {
+                      cursor: isSendDisabled ? 'not-allowed' : 'pointer'
+                    }
+                  ]}
+                  onPress={handleSend}
+                  disabled={isSendDisabled}
+                  onMouseEnter={() => setIsSendHovered(true)}
+                  onMouseLeave={() => setIsSendHovered(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send question"
+                  activeOpacity={0.85}
+                >
+                  {loading ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={styles.sendButtonText}>Sending</Text>
+                    </View>
+                  ) : (
+                    <Text style={[styles.sendButtonText, isSendDisabled && styles.sendButtonTextDisabled]}>Send</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })()}
+          </View>
+
+          {/* Unobtrusive Simulation Disclosure Footer */}
+          <View style={styles.simulationBanner}>
+            <Text style={styles.simulationBannerText}>
+              SIMULATION ONLY: ZettaRemit is an educational software simulation and does not move real money or connect to live banking rails.
+            </Text>
           </View>
         </View>
 
@@ -336,23 +471,23 @@ export default function AIAssistantScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9'
+    backgroundColor: '#F8FAFC'
   },
   topBar: {
     backgroundColor: '#001E62',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#002D80'
   },
   backButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: '#002D80'
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)'
   },
   backButtonText: {
     color: '#FFFFFF',
@@ -365,18 +500,20 @@ const styles = StyleSheet.create({
   topBarTitle: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: '700'
+    fontWeight: '700',
+    letterSpacing: 0.2
   },
   topBarSubtitle: {
     color: '#93C5FD',
     fontSize: 11,
+    fontWeight: '500',
     marginTop: 2
   },
   clearButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)'
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)'
   },
   clearButtonText: {
     color: '#E2E8F0',
@@ -384,19 +521,20 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   },
   simulationBanner: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FDE68A'
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9'
   },
   simulationBannerText: {
-    color: '#92400E',
-    fontSize: 12,
-    textAlign: 'center'
+    color: '#64748B',
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 15
   },
   unavailableBanner: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -409,31 +547,33 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   errorBanner: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#FCA5A5'
   },
   errorBannerText: {
     color: '#B91C1C',
     fontSize: 13,
+    fontWeight: '500',
     textAlign: 'center'
   },
   chatWrapper: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    backgroundColor: '#F8FAFC'
   },
   desktopChatWrapper: {
-    maxWidth: 860,
+    maxWidth: 880,
     width: '100%',
     alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowColor: '#001E62',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
     elevation: 2,
     borderLeftWidth: 1,
     borderRightWidth: 1,
@@ -443,12 +583,12 @@ const styles = StyleSheet.create({
     flex: 1
   },
   messagesContainer: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 24
   },
   messageRow: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 18,
     alignItems: 'flex-start'
   },
   userRow: {
@@ -461,104 +601,117 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#001E62',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 4
+    marginRight: 10,
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: '#003DA5',
+    shadowColor: '#001E62',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 2
   },
   bubble: {
     maxWidth: '82%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16
   },
   userBubble: {
     backgroundColor: '#003DA5',
-    borderBottomRightRadius: 2
+    borderBottomRightRadius: 4,
+    shadowColor: '#003DA5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2
   },
   assistantBubble: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderBottomLeftRadius: 2
+    borderBottomLeftRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1
   },
   messageText: {
-    fontSize: 14,
-    lineHeight: 21
+    fontSize: 14.5,
+    lineHeight: 22.5
   },
   userMessageText: {
     color: '#FFFFFF'
   },
   assistantMessageText: {
-    color: '#1E293B'
+    color: '#0F172A'
+  },
+  generatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  generatingText: {
+    fontSize: 13,
+    color: '#003DA5',
+    fontWeight: '500',
+    marginLeft: 6
   },
   sourcesContainer: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0'
-  },
-  sourcesLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '600',
-    marginBottom: 4
-  },
-  sourcePillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6
+    display: 'none'
   },
   sourcePill: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    marginRight: 4,
-    marginBottom: 4
-  },
-  sourcePillText: {
-    fontSize: 11,
-    color: '#334155'
+    display: 'none'
   },
   loadingBubble: {
     flexDirection: 'column',
     alignItems: 'flex-start',
     paddingVertical: 12
   },
+  loadingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   loadingText: {
     fontSize: 13,
     color: '#003DA5',
     fontWeight: '500',
-    marginTop: 6
+    marginLeft: 8
   },
   loadingSubtext: {
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#64748B',
-    marginTop: 2
+    marginTop: 4
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0'
+    borderTopColor: '#E2E8F0',
+    gap: 10
   },
   textInput: {
     flex: 1,
-    height: 44,
+    height: 46,
     backgroundColor: '#F8FAFC',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#CBD5E1',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    fontSize: 14,
-    color: '#1E293B',
-    marginRight: 8
+    borderRadius: 23,
+    paddingHorizontal: 18,
+    fontSize: 14.5,
+    color: '#0F172A'
+  },
+  textInputFocused: {
+    borderColor: '#003DA5',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5
   },
   textInputDisabled: {
     backgroundColor: '#F1F5F9',
@@ -566,18 +719,31 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: '#003DA5',
-    paddingHorizontal: 18,
-    height: 44,
-    borderRadius: 22,
+    paddingHorizontal: 20,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    shadowColor: '#003DA5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  sendButtonHovered: {
+    backgroundColor: '#002D80'
   },
   sendButtonDisabled: {
-    backgroundColor: '#94A3B8'
+    backgroundColor: '#E2E8F0',
+    shadowOpacity: 0,
+    elevation: 0
   },
   sendButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '600'
+  },
+  sendButtonTextDisabled: {
+    color: '#94A3B8'
   }
 });

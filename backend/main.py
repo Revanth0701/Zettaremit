@@ -22,7 +22,7 @@ from money import TransferRequest, submission_fingerprint, RATE
 from internal_service import calculate_transfer, ServiceUnavailable
 from settings import setting, production
 from rate_limit import limiter
-from exchange_rates import ExchangeRateProvider, RateUnavailable
+from exchange_rates import ExchangeRateProvider, RateUnavailable, get_exchange_rate_provider as _get_shared_rate_provider
 from quotes import issue_quote, validate_quote, InvalidQuote
 from api_responses import (HealthResponse, RegistrationResponse, LoginResponse,
                            TransactionResponse, TransactionCreatedResponse, QuoteResponse)
@@ -212,10 +212,28 @@ def simulation_config():
     return {"source_currency": "INR", "target_currency": "USD", "inr_per_usd": str(RATE), "fee_percent": "3", "simulation": True}
 
 
-@lru_cache(maxsize=1)
 def get_exchange_rate_provider():
-    # Lazy, process-local cache; construction performs no network requests.
-    return ExchangeRateProvider()
+    # Shared process-local provider; construction performs no network requests.
+    return _get_shared_rate_provider()
+
+
+@app.get("/simulation/rate")
+def simulation_rate(current_user: User = Depends(get_current_user),
+                    provider: ExchangeRateProvider = Depends(get_exchange_rate_provider)):
+    limiter.check(("rate", current_user.user_id), limit=30, seconds=60)
+    try:
+        snapshot = provider.get_rate()
+        return {
+            "source_currency": "INR",
+            "target_currency": "USD",
+            "inr_per_usd": str(snapshot.inr_per_usd),
+            "observed_at": snapshot.observed_at.isoformat(),
+            "attribution_text": snapshot.attribution_text,
+            "attribution_url": snapshot.attribution_url,
+            "indicative": True
+        }
+    except Exception:
+        raise HTTPException(status_code=503, detail="Exchange rate temporarily unavailable")
 
 
 @app.post("/simulation/quote", response_model=QuoteResponse)
@@ -257,13 +275,14 @@ def register_user(user: UserCreate, request: Request, db: Session = Depends(get_
     )
     db.add(new_user)
 
-    # 2. Save the KYC verification record linked to this user
+    # 2. Save the KYC verification record linked to this user (simulation only)
+    # SEC-02: Never persist raw Aadhaar, PAN, passport, or other government ID numbers.
     new_verification = UserVerification(
         verification_id="KYC-" + uuid.uuid4().hex.upper(),
         user_id=new_user_id,
-        document_type=user.document_type or "NONE",
-        document_number=user.document_number,
-        document_status="PENDING"
+        document_type=user.document_type or "SIMULATED",
+        document_number=None,
+        document_status="SIMULATED"
     )
     db.add(new_verification)
 

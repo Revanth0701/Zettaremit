@@ -56,10 +56,12 @@ export default {
   register: (...args) => getClient().register(...args),
   history: () => getClient().history(),
   quote: (...args) => getClient().quote(...args),
+  rate: () => getClient().rate(),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
   aiHealth: () => getClient().aiHealth(),
   aiAsk: (...args) => getClient().aiAsk(...args),
+  aiAskStream: (...args) => getClient().aiAskStream(...args),
   logout: () => getClient().logout(),
   session: () => getClient().session()
 };

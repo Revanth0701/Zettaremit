@@ -21,7 +21,6 @@ export default function RegistrationWizard({ navigation }) {
   const [country, setCountry] = useState('');
 
   const [kycType, setKycType] = useState('PAN Card');
-  const [kycNumber, setKycNumber] = useState('');
   const [error, setError] = useState('');
 
   function showAlert(title, message) {
@@ -31,10 +30,21 @@ export default function RegistrationWizard({ navigation }) {
   async function nextStep() {
     // 1. Validate Step 1
     if (currentStep === 1) {
-      if (!emailPhone || password.length < 12) {
-        Alert.alert("Missing Info", "Enter your email and a password of at least 12 characters (maximum 72 UTF-8 bytes).");
+      if (!emailPhone || !emailPhone.trim()) {
+        setError("Please enter your email address.");
         return;
       }
+      if (!password || password.length < 12) {
+        setError("Password must be at least 12 characters.");
+        return;
+      }
+      const encoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+      const byteLen = encoder ? encoder.encode(password).length : password.length;
+      if (byteLen > 72 || password.length > 72) {
+        setError("Password is too long. Please use 72 characters or fewer.");
+        return;
+      }
+      setError('');
     }
 
     if (currentStep === 4) {
@@ -88,12 +98,12 @@ export default function RegistrationWizard({ navigation }) {
 
   function getHeaderTitle() {
     if (currentStep <= 5) {
-      return "Demo signup with email";
+      return "Create your account";
     }
     if (currentStep <= 7) {
-      return "Demo profile (no real documents)";
+      return "Verify your profile";
     }
-    return "Demo signup complete";
+    return "Account created";
   }
 
   return (
@@ -108,7 +118,7 @@ export default function RegistrationWizard({ navigation }) {
                 <Image source={require('../assets/logo.png')} style={styles.desktopLogoImage} />
                 <Text style={styles.desktopTagline}>      ZettaRemit</Text>
                 <Text style={styles.desktopDescription}>
-                  A simulated remittance demo with illustrative exchange rates. No real funds move.
+                  Fast, transparent cross-border transfers from India to the USA.
                 </Text>
               </View>
             </View>
@@ -139,24 +149,36 @@ export default function RegistrationWizard({ navigation }) {
                   {currentStep === 1 && (
                     <View>
                       <Text style={styles.mainTitle}>Create your account</Text>
-                      <Text style={styles.subLabelText}>We'll send a verification code to this address/number.</Text>
+                      <Text style={styles.subLabelText}>Enter your email address to set up your account.</Text>
+
+                      {!!error && (
+                        <View style={styles.inlineErrorContainer} accessibilityRole="alert">
+                          <Text style={styles.inlineErrorText}>{error}</Text>
+                        </View>
+                      )}
 
                       <TextInput
                         style={styles.formInputBox}
-                        placeholder="Email address or mobile number"
+                        placeholder="Enter your email address"
                         placeholderTextColor="#A0AEC0"
                         value={emailPhone}
-                        onChangeText={setEmailPhone}
+                        onChangeText={(val) => {
+                          setEmailPhone(val);
+                          if (error) setError('');
+                        }}
                         keyboardType="email-address"
                         autoCapitalize="none"
                       />
 
                       <TextInput
                         style={styles.formInputBox}
-                        placeholder="At least 12 characters (max 72 bytes)"
+                        placeholder="Enter your password"
                         placeholderTextColor="#A0AEC0"
                         value={password}
-                        onChangeText={setPassword}
+                        onChangeText={(val) => {
+                          setPassword(val);
+                          if (error) setError('');
+                        }}
                         secureTextEntry
                       />
                     </View>
@@ -164,8 +186,8 @@ export default function RegistrationWizard({ navigation }) {
 
                   {currentStep === 2 && (
                     <View>
-                      <Text style={styles.mainTitle}>OTP Verification</Text>
-                      <Text style={styles.subLabelText}>Demo OTP screen only. No code is sent or verified.</Text>
+                      <Text style={styles.mainTitle}>OTP Verification (Simulated)</Text>
+                      <Text style={styles.subLabelText}>Simulation mode: No SMS is delivered. Enter any 6-digit test code (e.g. 123456) to proceed.</Text>
 
                       <View style={styles.otpGridWrapper}>
                         <View style={[styles.otpDisplayCell, otp.length === 0 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[0] || ''}</Text></View>
@@ -223,7 +245,7 @@ export default function RegistrationWizard({ navigation }) {
                   {currentStep === 6 && (
                     <View style={styles.alignItemsCenter}>
                       <Text style={styles.illustrationPlaceholder}>🧑‍💻</Text>
-                      <Text style={styles.mainTitleCenter}>Select your identity document to proceed</Text>
+                      <Text style={styles.mainTitleCenter}>Select document type (Simulated Demo)</Text>
 
                       <View style={styles.kycOptionsWrapper}>
                         <TouchableOpacity style={[styles.documentItemRow, kycType === 'PAN Card' && styles.documentItemRowActive]} onPress={() => setKycType('PAN Card')} activeOpacity={0.8}>
@@ -251,27 +273,21 @@ export default function RegistrationWizard({ navigation }) {
 
                   {currentStep === 7 && (
                     <View>
-                      <Text style={styles.mainTitle}>{kycType}</Text>
-                      <Text style={styles.subLabelText}>Demo fields only. Do not enter real identity or bank information.</Text>
+                      <Text style={styles.mainTitle}>{kycType} (Simulation)</Text>
+                      <Text style={styles.subLabelText}>Demo mode: Do not enter real government document numbers. Real identity documents are not collected, verified, or stored in simulation mode.</Text>
 
-                      <TextInput
-                        style={styles.formInputBox}
-                        placeholder={
-                          kycType === 'Aadhar Card' ? 'Sample reference only' :
-                          kycType === 'PAN Card' ? 'Sample reference only' :
-                          `Sample reference only`
-                        }
-                        placeholderTextColor="#A0AEC0"
-                        autoCapitalize="characters"
-                        maxLength={kycType === 'Aadhar Card' ? 12 : kycType === 'PAN Card' ? 10 : 20}
-                        keyboardType={kycType === 'Aadhar Card' ? 'number-pad' : 'default'}
-                        value={kycNumber}
-                        onChangeText={setKycNumber}
-                      />
+                      <View style={[styles.formInputBox, { backgroundColor: '#F8FAFC', justifyContent: 'center', borderColor: '#CBD5E1', paddingVertical: 14 }]}>
+                        <Text style={{ color: '#4A5568', fontSize: 14, fontWeight: '600' }}>
+                          Assigned Test ID: {kycType === 'Aadhar Card' ? 'DEMO-9999-8888-7777' : kycType === 'PAN Card' ? 'DEMO-ABCDE1234F' : 'DEMO-PASS-0001'} (Simulated)
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 12, color: '#718096', marginTop: -6, marginBottom: 16 }}>
+                        No government ID numbers are collected or stored.
+                      </Text>
 
                       <TouchableOpacity style={styles.uploadBoxPlaceholder}>
                         <Text style={styles.uploadBoxIcon}>📤</Text>
-                        <Text style={styles.uploadBoxText}>Demo upload unavailable: {kycType} photo</Text>
+                        <Text style={styles.uploadBoxText}>Photo upload (Optional / Disabled in simulation)</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -279,9 +295,9 @@ export default function RegistrationWizard({ navigation }) {
                   {currentStep === 8 && (
                     <View style={{alignItems: 'center', paddingVertical: 40}}>
                       <Text style={{fontSize: 70, marginBottom: 24}}>✅</Text>
-                      <Text style={{fontSize: 24, fontWeight: '700', color: '#1A202C', marginBottom: 12}}>Demo account created</Text>
+                      <Text style={{fontSize: 24, fontWeight: '700', color: '#1A202C', marginBottom: 12}}>Account Created</Text>
                       <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', lineHeight: 22}}>
-                        This is a simulation. No identity, phone, bank account or payment has been verified.
+                        Your profile has been created successfully in simulation mode. You are now ready to explore transfers.
                       </Text>
                     </View>
                   )}
@@ -292,8 +308,8 @@ export default function RegistrationWizard({ navigation }) {
                   <TouchableOpacity style={styles.primaryActionButton} activeOpacity={0.9} onPress={nextStep} disabled={loading} accessibilityRole="button">
                     <Text style={styles.primaryActionButtonText}>
                       {
-                        currentStep === 6 ? "Link KYC Document" :
-                        currentStep === 7 ? "Submit & Verify" :
+                        currentStep === 6 ? "Select & Continue" :
+                        currentStep === 7 ? "Complete Demo Setup" :
                         currentStep === 8 ? "Continue to Login" :
                         "Continue"
                       }
@@ -346,6 +362,8 @@ const styles = StyleSheet.create({
 
   subLabelText: { fontSize: 14, color: '#718096', marginBottom: 20, lineHeight: 20 },
 
+  inlineErrorContainer: { backgroundColor: '#FED7D7', borderWidth: 1, borderColor: '#FEB2B2', borderRadius: 8, padding: 12, marginBottom: 16 },
+  inlineErrorText: { color: '#C53030', fontSize: 14, fontWeight: '600', textAlign: 'center' },
   formInputBox: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, fontSize: 16, color: '#000000', backgroundColor: '#F8F9FA', marginBottom: 12 },
 
   otpGridWrapper: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10 },

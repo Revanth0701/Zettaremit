@@ -198,3 +198,15 @@ class ExchangeRateProvider:
             if self._usable(now):
                 return replace(self._snapshot, schedule_overdue=now >= self._snapshot.next_update_at)
             raise RateUnavailable("stale_rate" if self._snapshot else self._last_error) from None
+
+
+_SHARED_PROVIDER = None
+
+
+def get_exchange_rate_provider() -> ExchangeRateProvider:
+    """Return the shared process-local ExchangeRateProvider singleton."""
+    global _SHARED_PROVIDER
+    if _SHARED_PROVIDER is None:
+        _SHARED_PROVIDER = ExchangeRateProvider()
+    return _SHARED_PROVIDER
+

@@ -29,7 +29,9 @@ const rows = [
 module.exports = {
   transfersDisabled: true,
   quote,
+  rate: async () => ({ source_currency: 'INR', target_currency: 'USD', inr_per_usd: '90.00000000', observed_at: new Date().toISOString(), attribution_text: 'Rates By Exchange Rate API', attribution_url: 'https://www.exchangerate-api.com', indicative: true }),
   history: async () => rows.map(row => ({ ...row })),
+  config: async () => ({ inr_per_usd: '90.00000000', fee_percent: '3' }),
   transfer: disabled,
   register: disabled,
   login: disabled,
