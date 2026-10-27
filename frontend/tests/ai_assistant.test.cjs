@@ -229,3 +229,48 @@ test('DashboardScreen and AIAssistantScreen adhere to final professional UI poli
   assert.match(aiCode, /Your ZettaRemit AI Assistant/, 'AIAssistantScreen must display updated subtitle');
   assert.doesNotMatch(aiCode, /Official Remittance Support/, 'Old subtitle must be replaced');
 });
+
+test('Authenticated navigation provides permanent ZettaAI Assistant entry points on desktop sidebar and mobile', () => {
+  const dashPath = path.join(__dirname, '..', 'screens', 'DashboardScreen.js');
+  const dashCode = fs.readFileSync(dashPath, 'utf8');
+  const appPath = path.join(__dirname, '..', 'App.js');
+  const appCode = fs.readFileSync(appPath, 'utf8');
+  const aiPath = path.join(__dirname, '..', 'screens', 'AIAssistantScreen.js');
+  const aiCode = fs.readFileSync(aiPath, 'utf8');
+
+  // 1. Root App.js must register AIAssistantScreen on root stack
+  assert.match(
+    appCode,
+    /<Stack\.Screen\s+name="AIAssistant"\s+component=\{AIAssistantScreen\}/,
+    'App.js must register AIAssistant route pointing to AIAssistantScreen'
+  );
+
+  // 2. Desktop sidebar must contain visible ZettaAI Assistant navigation entry positioned below History
+  const historyIdx = dashCode.indexOf('>History</Text>');
+  const aiNavIdx = dashCode.indexOf('ZettaAI Assistant');
+  assert.ok(historyIdx !== -1, 'History nav item must exist in DashboardScreen');
+  assert.ok(aiNavIdx !== -1, 'ZettaAI Assistant nav item must exist in DashboardScreen');
+  assert.ok(aiNavIdx > historyIdx, 'ZettaAI Assistant option must be positioned below History in the sidebar');
+
+  // 3. Desktop sidebar must navigate directly to AIAssistant
+  assert.match(
+    dashCode,
+    /navigation\.navigate\(['"]AIAssistant['"]\)/,
+    'Desktop sidebar must navigate to AIAssistant'
+  );
+
+  // 4. Mobile bottom nav bar must contain dedicated ZettaAI tab
+  assert.match(
+    dashCode,
+    /<View\s+style=\{.*?styles\.bottomNavBar.*?}>[\s\S]*?ZettaAI[\s\S]*?<\/View>/,
+    'Mobile bottom navigation bar must contain dedicated ZettaAI tab'
+  );
+
+  // 5. AIAssistantScreen must support returning back to the Dashboard
+  assert.match(
+    aiCode,
+    /navigation\.goBack\(\)|navigation\.navigate\(['"]Dashboard['"]\)/,
+    'AIAssistantScreen must allow returning to Dashboard'
+  );
+});
+

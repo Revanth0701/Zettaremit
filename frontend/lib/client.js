@@ -1,4 +1,6 @@
 // Platform-independent client; injectable storage and transport for offline tests.
+const { triggerBackgroundWakeup } = require('./readiness');
+
 function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauthorized = () => {} }) {
   let parsed;
   try { parsed = new URL(baseUrl); } catch (_) { throw new Error('Configure a valid API base URL.'); }
@@ -107,9 +109,55 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     history: () => request('/transactions/'),
     quote: body => request('/simulation/quote',{method:'POST',body}),
     rate: () => request('/simulation/rate',{authenticated:true}),
+    getReferenceRate: async ({ signal, timeoutMs = 8000 } = {}) => {
+      const session = await storage.get();
+      if (session && session.token && session.expiresAt > Date.now()) {
+        try {
+          const data = await request('/simulation/rate', { authenticated: true, signal, timeoutMs });
+          if (data && data.inr_per_usd) {
+            const parsed = parseFloat(data.inr_per_usd);
+            if (Number.isFinite(parsed) && parsed > 0) {
+              return {
+                rate: parsed,
+                inr_per_usd: String(data.inr_per_usd),
+                observed_at: data.observed_at || null,
+                attribution_text: data.attribution_text || 'Rates By Exchange Rate API',
+                source: 'authenticated',
+              };
+            }
+          }
+        } catch (err) {
+          if (err && err.status !== 401 && err.code !== 'NETWORK') throw err;
+        }
+      }
+
+      const config = await request('/simulation/config', { authenticated: false, signal, timeoutMs });
+      if (config && config.inr_per_usd) {
+        const parsed = parseFloat(config.inr_per_usd);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          return {
+            rate: parsed,
+            inr_per_usd: String(config.inr_per_usd),
+            observed_at: config.observed_at || null,
+            attribution_text: config.attribution_text || 'Platform Reference Rate',
+            source: 'public_config',
+          };
+        }
+      }
+      const err = new Error('Reference rate temporarily unavailable');
+      err.status = 503;
+      throw err;
+    },
     transfer: (body,key) => request('/transactions/create',{method:'POST',body,key}),
     config: () => request('/simulation/config',{authenticated:false}),
     health: ({ timeoutMs, signal } = {}) => request('/health',{authenticated:false,timeoutMs:timeoutMs||10000,signal}),
+    wakeBackend: ({ timeoutMs = 15000, signal } = {}) =>
+      triggerBackgroundWakeup({
+        checkHealth: ({ timeoutMs: to, signal: sig } = {}) =>
+          request('/health', { authenticated: false, timeoutMs: to || timeoutMs, signal: sig || signal }),
+        timeoutMs,
+        signal
+      }),
     aiHealth: () => request('/ai/health',{authenticated:false,timeoutMs:5000}),
     aiAsk: (question,session_id) => request('/ai/ask',{method:'POST',body:{question,session_id},authenticated:true,timeoutMs:120000}),
     aiAskStream: async (question, session_id, { onChunk, onSources, onDone, onError, signal } = {}) => {

@@ -518,14 +518,17 @@ export default function DashboardScreen({ navigation }) {
                 </View>
                 <Text style={[styles.navText, appStep === 7 && styles.navTextActive]}>History</Text>
               </TouchableOpacity>
-              {aiEnabled && (
-                <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AIAssistant')}>
-                  <View style={extraStyles.navIconWrap}>
-                    <AssistantIcon size={19} color="#64748B" />
-                  </View>
-                  <Text style={styles.navText}>AI Assistant</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => navigation.navigate('AIAssistant')}
+                accessibilityRole="button"
+                accessibilityLabel="ZettaAI Assistant"
+              >
+                <View style={extraStyles.navIconWrap}>
+                  <AssistantIcon size={19} color="#003DA5" />
+                </View>
+                <Text style={styles.navText}>ZettaAI Assistant</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <TouchableOpacity style={styles.logoutButton} onPress={() => {
@@ -953,21 +956,24 @@ export default function DashboardScreen({ navigation }) {
                 )}
               </View>
 
-              <View style={styles.bottomNavBar}>
-                 <TouchableOpacity style={styles.navTabActive} onPress={() => setAppStep(1)}>
+              <View style={[styles.bottomNavBar, extraStyles.bottomNavBarRefined]}>
+                 <TouchableOpacity style={[styles.navTabActive, extraStyles.navTabActiveRefined]} onPress={() => setAppStep(1)}>
                     <View style={{ marginRight: 6 }}>
                       <HomeIcon size={16} color="#FFFFFF" />
                     </View>
                     <Text style={styles.navTabTextActive}>Home</Text>
                  </TouchableOpacity>
-                 {aiEnabled && (
-                   <TouchableOpacity style={styles.navTab} onPress={() => navigation.navigate('AIAssistant')}>
-                      <View style={extraStyles.navTabIconWrap}>
-                        <AssistantIcon size={18} color="#64748B" />
-                      </View>
-                      <Text style={styles.navTabText}>AI</Text>
-                   </TouchableOpacity>
-                 )}
+                 <TouchableOpacity
+                   style={styles.navTab}
+                   onPress={() => navigation.navigate('AIAssistant')}
+                   accessibilityRole="button"
+                   accessibilityLabel="ZettaAI Assistant"
+                 >
+                    <View style={extraStyles.navTabIconWrap}>
+                      <AssistantIcon size={18} color="#003DA5" />
+                    </View>
+                    <Text style={styles.navTabText}>ZettaAI</Text>
+                 </TouchableOpacity>
                  <TouchableOpacity style={styles.navTab} onPress={() => setShowProfileModal(true)} accessibilityRole="button">
                     <View style={extraStyles.navTabIconWrap}>
                       <ProfileIcon size={18} color="#64748B" />
@@ -1251,6 +1257,8 @@ const extraStyles = StyleSheet.create({
   quickActionTextRefined: { fontSize: 11.5, color: '#1E293B', textAlign: 'center', fontWeight: '600', lineHeight: 15 },
   paymentIconBox: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EBF3FC', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   navTabIconWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  bottomNavBarRefined: { justifyContent: 'space-around', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, zIndex: 20 },
+  navTabActiveRefined: { paddingHorizontal: 18, paddingVertical: 9, marginRight: 0 },
   submissionDisclosure: { fontSize: 12, color: '#718096', textAlign: 'center', marginBottom: 12, lineHeight: 18 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   profileModalCard: { width: '100%', maxWidth: 320, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 24, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8 },

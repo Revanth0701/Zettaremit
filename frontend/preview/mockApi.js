@@ -1,4 +1,4 @@
-﻿// Local visual fixtures only. No real API client, credentials, storage, or network.
+// Local visual fixtures only. No real API client, credentials, storage, or network.
 const disabled = () => Promise.reject(new Error('Transactions and other writes are disabled in this local visual preview.'));
 const { normalizeInr } = require('../lib/money');
 let sequence = 0;
@@ -30,11 +30,21 @@ module.exports = {
   transfersDisabled: true,
   quote,
   rate: async () => ({ source_currency: 'INR', target_currency: 'USD', inr_per_usd: '90.00000000', observed_at: new Date().toISOString(), attribution_text: 'Rates By Exchange Rate API', attribution_url: 'https://www.exchangerate-api.com', indicative: true }),
+  getReferenceRate: async () => ({
+    rate: 90.0,
+    inr_per_usd: '90.00000000',
+    observed_at: new Date().toISOString(),
+    attribution_text: 'Rates By Exchange Rate API',
+    attribution_url: 'https://www.exchangerate-api.com',
+    source: 'mock'
+  }),
   history: async () => rows.map(row => ({ ...row })),
   config: async () => ({ inr_per_usd: '90.00000000', fee_percent: '3' }),
   transfer: disabled,
   register: disabled,
   login: disabled,
   request: disabled,
+  health: async () => ({ status: 'ok', simulation: true }),
+  wakeBackend: async () => ({ ready: true }),
   logout: async () => undefined
 };

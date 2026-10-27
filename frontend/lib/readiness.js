@@ -93,4 +93,58 @@ async function waitForBackendReadiness({
   }
 }
 
-module.exports = { waitForBackendReadiness, sleep };
+let activeBackgroundWakeup = null;
+let isKnownAwake = false;
+
+/**
+ * Initiates a non-blocking background GET /health request to wake up Render Free.
+ * Ensures only one wake-up attempt runs concurrently and avoids duplicate loops.
+ */
+function triggerBackgroundWakeup({ checkHealth, timeoutMs = 15000, signal = null } = {}) {
+  if (isKnownAwake) {
+    return Promise.resolve({ ready: true, alreadyReady: true });
+  }
+  if (activeBackgroundWakeup) {
+    return activeBackgroundWakeup;
+  }
+  if (typeof checkHealth !== 'function') {
+    return Promise.resolve({ ready: false, error: 'No checkHealth function provided' });
+  }
+
+  activeBackgroundWakeup = (async () => {
+    try {
+      const res = await checkHealth({ timeoutMs, signal });
+      if (res && (res.status === 'ok' || res.simulation !== undefined || res.ok)) {
+        isKnownAwake = true;
+        return { ready: true };
+      }
+      return { ready: false };
+    } catch (_) {
+      // Non-blocking wake-up timed out or failed while starting up
+      return { ready: false };
+    } finally {
+      activeBackgroundWakeup = null;
+    }
+  })();
+
+  return activeBackgroundWakeup;
+}
+
+function getBackendWakeupState() {
+  return {
+    isAwake: isKnownAwake,
+    isWaking: activeBackgroundWakeup !== null,
+  };
+}
+
+function markBackendAwake(val = true) {
+  isKnownAwake = val;
+}
+
+module.exports = {
+  waitForBackendReadiness,
+  sleep,
+  triggerBackgroundWakeup,
+  getBackendWakeupState,
+  markBackendAwake,
+};

@@ -277,7 +277,13 @@ export default function AIAssistantScreen({ navigation }) {
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
+                navigation.goBack();
+              } else if (navigation && typeof navigation.navigate === 'function') {
+                navigation.navigate('Dashboard');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             activeOpacity={0.8}

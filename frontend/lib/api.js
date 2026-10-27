@@ -44,7 +44,7 @@ const storage = {
 let client;
 function getClient() {
   if (!client) client = createClient({
-    baseUrl: process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? 'http://127.0.0.1:8000' : ''),
+    baseUrl: process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? 'http://127.0.0.1:8000' : 'https://zettaremit-app.onrender.com'),
     allowHttp: __DEV__, storage, fetchImpl: (...args) => fetch(...args),
     onUnauthorized: () => listeners.forEach(listener => listener())
   });
@@ -57,9 +57,11 @@ export default {
   history: () => getClient().history(),
   quote: (...args) => getClient().quote(...args),
   rate: () => getClient().rate(),
+  getReferenceRate: (...args) => getClient().getReferenceRate(...args),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
   health: (...args) => getClient().health(...args),
+  wakeBackend: (...args) => getClient().wakeBackend(...args),
   aiHealth: () => getClient().aiHealth(),
   aiAsk: (...args) => getClient().aiAsk(...args),
   aiAskStream: (...args) => getClient().aiAskStream(...args),

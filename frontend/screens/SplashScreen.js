@@ -13,11 +13,11 @@ export default function SplashScreen({ navigation }) {
           if (sess && sess.token) {
             navigation.replace('Dashboard');
           } else {
-            navigation.replace('Welcome');
+            navigation.replace('Home');
           }
         }
       } catch (_) {
-        if (active) navigation.replace('Welcome');
+        if (active) navigation.replace('Home');
       }
     }, 2500);
 

@@ -61,6 +61,15 @@ export default function WelcomeScreen({ navigation }) {
             <Text style={styles.secondaryButtonText}>Sign-up</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity 
+            style={styles.backButton} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Home')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.backButtonText}>← Back to Homepage</Text>
+          </TouchableOpacity>
+
           <Text style={styles.footerText}>
             By continuing you accept our{'\n'}
             <Text style={styles.linkText}>Terms of service</Text> and <Text style={styles.linkText}>Privacy Policy</Text>
@@ -174,5 +183,14 @@ const styles = StyleSheet.create({
   linkText: { 
     textDecorationLine: 'underline', 
     color: '#93C5FD' 
+  },
+  backButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#93C5FD',
+    fontSize: 14,
+    fontWeight: '600',
   }
 });

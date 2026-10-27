@@ -207,14 +207,35 @@ DUMMY_HASH = pwd_context.hash("synthetic-timing-equalizer")
 def health():
     return {"status": "ok", "simulation": True}
 
-@app.get("/simulation/config")
-def simulation_config():
-    return {"source_currency": "INR", "target_currency": "USD", "inr_per_usd": str(RATE), "fee_percent": "3", "simulation": True}
-
-
 def get_exchange_rate_provider():
     # Shared process-local provider; construction performs no network requests.
     return _get_shared_rate_provider()
+
+
+@app.get("/simulation/config")
+def simulation_config(provider: ExchangeRateProvider = Depends(get_exchange_rate_provider)):
+    inr_rate = None
+    observed_at = None
+    attribution_text = "Rates By Exchange Rate API"
+    attribution_url = "https://www.exchangerate-api.com"
+    try:
+        snapshot = provider.get_rate()
+        inr_rate = str(snapshot.inr_per_usd)
+        observed_at = snapshot.observed_at.isoformat()
+        attribution_text = snapshot.attribution_text
+        attribution_url = snapshot.attribution_url
+    except Exception:
+        pass
+    return {
+        "source_currency": "INR",
+        "target_currency": "USD",
+        "inr_per_usd": inr_rate,
+        "fee_percent": "3",
+        "simulation": True,
+        "observed_at": observed_at,
+        "attribution_text": attribution_text,
+        "attribution_url": attribution_url,
+    }
 
 
 @app.get("/simulation/rate")
