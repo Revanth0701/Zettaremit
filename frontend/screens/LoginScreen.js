@@ -1,29 +1,83 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, Image, ActivityIndicator } from 'react-native';
 // Session handling is centralized and never trusts stored user IDs.
 import api from '../lib/api';
+import { waitForBackendReadiness } from '../lib/readiness';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= 768;
 
-  // The NEW backend logic injected into your OLD component
-  const [loading, setLoading] = useState(false);
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleLogin = async () => {
     if (loading) return;
     setError('');
     setLoading(true);
+    setStatusMessage('Connecting to ZettaRemit...');
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
+      // Step 1: Check backend readiness (handles Render Free cold starts)
+      const readiness = await waitForBackendReadiness({
+        checkHealth: ({ timeoutMs, signal }) => api.health({ timeoutMs, signal }),
+        maxWaitMs: 60000,
+        pollIntervalMs: 2000,
+        healthTimeoutMs: 6000,
+        waitNoticeDelayMs: 2500,
+        onStatusChange: (msg) => {
+          if (isMountedRef.current) setStatusMessage(msg);
+        },
+        signal: abortController.signal,
+      });
+
+      if (!isMountedRef.current || abortController.signal.aborted) {
+        return;
+      }
+
+      if (!readiness.ready) {
+        setError('ZettaRemit is taking longer than expected to connect. Please try again.');
+        setLoading(false);
+        setStatusMessage('');
+        return;
+      }
+
+      // Step 2: Backend is ready! Submit login request exactly once
+      setStatusMessage('Connecting to ZettaRemit...');
       await api.login(email, password);
+
+      if (!isMountedRef.current) return;
       setPassword('');
-      navigation.reset({ index:0, routes:[{name:'Dashboard'}] });
+      navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
     } catch (err) {
+      if (!isMountedRef.current || abortController.signal.aborted) return;
       setError(err.message || 'Incorrect email or password. Please try again.');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setStatusMessage('');
+      }
     }
   };
 
@@ -60,6 +114,23 @@ export default function LoginScreen({ navigation }) {
                 {!!error && (
                   <View style={styles.errorContainer} accessibilityRole="alert">
                     <Text style={styles.errorText}>{error}</Text>
+                    {error === 'ZettaRemit is taking longer than expected to connect. Please try again.' && (
+                      <TouchableOpacity
+                        style={styles.errorRetryButton}
+                        onPress={handleLogin}
+                        accessibilityRole="button"
+                        disabled={loading}
+                      >
+                        <Text style={styles.errorRetryButtonText}>Retry</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {loading && !!statusMessage && (
+                  <View style={styles.connectingContainer} accessibilityLiveRegion="polite">
+                    <ActivityIndicator size="small" color="#0047AB" style={{ marginRight: 8 }} />
+                    <Text style={styles.connectingText}>{statusMessage}</Text>
                   </View>
                 )}
 
@@ -94,8 +165,22 @@ export default function LoginScreen({ navigation }) {
                   <Text style={styles.forgotText}>Forgot Password?</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading} accessibilityRole="button">
-                  <Text style={styles.primaryButtonText}>Login</Text>
+                <TouchableOpacity
+                  style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                  accessibilityRole="button"
+                >
+                  {loading ? (
+                    <View style={styles.buttonLoadingRow}>
+                      <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                      <Text style={styles.primaryButtonText}>Connecting...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.primaryButtonText}>
+                      {error === 'ZettaRemit is taking longer than expected to connect. Please try again.' ? 'Retry' : 'Login'}
+                    </Text>
+                  )}
                 </TouchableOpacity>
 
                 <View style={styles.signupPromptRow}>
@@ -157,11 +242,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+  errorRetryButton: {
+    marginTop: 8,
+    alignSelf: 'center',
+    backgroundColor: '#C53030',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  errorRetryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  connectingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EBF8FF',
+    borderColor: '#BEE3F8',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  connectingText: {
+    color: '#2B6CB0',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
   inputLabel: { fontSize: 13, color: '#4A5568', fontWeight: '600', marginBottom: 6 },
   inputBox: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 14, fontSize: 15, backgroundColor: '#FFFFFF', marginBottom: 16, color: '#1A202C' },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 24 },
   forgotText: { color: '#0047AB', fontSize: 13, fontWeight: '500' },
   primaryButton: { backgroundColor: '#0047AB', paddingVertical: 14, borderRadius: 8, alignItems: 'center', shadowColor: '#0047AB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 },
+  primaryButtonDisabled: { opacity: 0.75 },
+  buttonLoadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
   signupPromptRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   promptText: { color: '#718096', fontSize: 14 },

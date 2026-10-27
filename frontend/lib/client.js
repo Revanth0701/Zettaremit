@@ -6,7 +6,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
   const loopback = ['localhost','127.0.0.1','[::1]'].includes(parsed.hostname);
   const valid = clean && (parsed.protocol === 'https:' || (allowHttp && loopback && parsed.protocol === 'http:'));
   if (!valid) throw new Error('Configure a valid HTTPS API base URL (loopback HTTP only for development).');
-  async function request(path, { method = 'GET', body, authenticated = true, key, timeoutMs } = {}) {
+  async function request(path, { method = 'GET', body, authenticated = true, key, timeoutMs, signal } = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (authenticated) {
       const session = await storage.get();
@@ -20,9 +20,24 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     const controller = new AbortController();
     const timeout = timeoutMs || 15000;
     const timer = setTimeout(() => controller.abort(), timeout);
+    let abortListener;
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort();
+      } else if (signal.addEventListener) {
+        abortListener = () => controller.abort();
+        signal.addEventListener('abort', abortListener, { once: true });
+      }
+    }
     try {
       response = await fetchImpl(baseUrl.replace(/\/$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
     } catch (err) {
+      if (signal && signal.aborted) {
+        const error = new Error('The request was cancelled.');
+        error.code = 'ABORT';
+        error.status = 0;
+        throw error;
+      }
       if (err && err.name === 'AbortError') {
         const error = new Error('The request timed out. Please try again.');
         error.code = 'TIMEOUT';
@@ -32,7 +47,12 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
       const error = new Error('Network request could not complete. Retry using the same request.');
       error.code = 'NETWORK'; throw error;
     }
-    finally { clearTimeout(timer); }
+    finally {
+      clearTimeout(timer);
+      if (signal && abortListener && signal.removeEventListener) {
+        signal.removeEventListener('abort', abortListener);
+      }
+    }
     let data;
     try { data = await response.json(); } catch (_) {
       const error = new Error('The service returned an invalid response.'); error.code = 'INVALID_RESPONSE'; throw error;
@@ -89,6 +109,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     rate: () => request('/simulation/rate',{authenticated:true}),
     transfer: (body,key) => request('/transactions/create',{method:'POST',body,key}),
     config: () => request('/simulation/config',{authenticated:false}),
+    health: ({ timeoutMs, signal } = {}) => request('/health',{authenticated:false,timeoutMs:timeoutMs||10000,signal}),
     aiHealth: () => request('/ai/health',{authenticated:false,timeoutMs:5000}),
     aiAsk: (question,session_id) => request('/ai/ask',{method:'POST',body:{question,session_id},authenticated:true,timeoutMs:120000}),
     aiAskStream: async (question, session_id, { onChunk, onSources, onDone, onError, signal } = {}) => {

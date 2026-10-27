@@ -59,6 +59,7 @@ export default {
   rate: () => getClient().rate(),
   transfer: (...args) => getClient().transfer(...args),
   config: () => getClient().config(),
+  health: (...args) => getClient().health(...args),
   aiHealth: () => getClient().aiHealth(),
   aiAsk: (...args) => getClient().aiAsk(...args),
   aiAskStream: (...args) => getClient().aiAskStream(...args),
