@@ -1,6 +1,151 @@
 // Platform-independent client; injectable storage and transport for offline tests.
 const { triggerBackgroundWakeup } = require('./readiness');
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Public direct reference-rate fetch — bypasses Render when it is sleeping.
+//
+// Source : open.er-api.com/v6/latest/USD
+//          Free, keyless, CORS: Access-Control-Allow-Origin: *
+//          Updates once per day.  No API key is required or exposed.
+//
+// Freshness: rate observation must be within 96 hours — identical to the
+//            backend ExchangeRateProvider.MAX_AGE policy — so the displayed
+//            rate is never stale beyond the same window Render accepts.
+//
+// Attribution: "Rates By Exchange Rate API" / https://www.exchangerate-api.com
+//              Must be shown wherever the rate is displayed (ToS requirement).
+// ─────────────────────────────────────────────────────────────────────────────
+const PUBLIC_RATE_ENDPOINT = 'https://open.er-api.com/v6/latest/USD';
+const PUBLIC_RATE_MAX_AGE_MS = 96 * 60 * 60 * 1000; // 96 h — matches backend policy
+const PUBLIC_RATE_ATTRIBUTION = 'Rates By Exchange Rate API';
+const PUBLIC_RATE_ATTRIBUTION_URL = 'https://www.exchangerate-api.com';
+const PUBLIC_RATE_TIMEOUT_MS = 8000;
+const PUBLIC_RATE_MAX_BYTES = 128 * 1024; // matches backend MAX_RESPONSE_BYTES
+
+/**
+ * Validate an open.er-api.com response payload (already parsed from JSON)
+ * against the same invariants the Python backend enforces.
+ *
+ * Returns a validated rate object, or throws an Error so callers can treat
+ * the result as "unavailable" without crashing.
+ *
+ * @param {object} data   - Parsed JSON from open.er-api.com
+ * @param {number} nowMs  - Current wall-clock time in milliseconds
+ */
+function _validatePublicRatePayload(data, nowMs) {
+  if (!data || typeof data !== 'object') throw new Error('Invalid response structure');
+  if (data.result !== 'success') throw new Error('Provider result not success');
+  if (data.base_code !== 'USD') throw new Error('Unexpected base currency');
+  const rates = data.rates;
+  if (!rates || typeof rates !== 'object') throw new Error('Missing rates object');
+  // USD=1 sanity guard (mirrors Python backend check)
+  if (rates.USD !== 1) throw new Error('USD base rate sanity check failed');
+  const raw = rates.INR;
+  if (typeof raw !== 'number' && typeof raw !== 'string') throw new Error('INR rate missing or wrong type');
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed >= 10000000000) {
+    throw new Error('INR rate out of valid range');
+  }
+  // Validate observation / schedule timestamps
+  const lastUpdateUnix = data.time_last_update_unix;
+  const nextUpdateUnix = data.time_next_update_unix;
+  if (typeof lastUpdateUnix !== 'number' || lastUpdateUnix <= 0) throw new Error('Invalid observed timestamp');
+  if (typeof nextUpdateUnix !== 'number' || nextUpdateUnix <= lastUpdateUnix) throw new Error('Invalid next-update timestamp');
+  const observedMs = lastUpdateUnix * 1000;
+  if (observedMs > nowMs) throw new Error('Observed timestamp is in the future');
+  const ageMs = nowMs - observedMs;
+  if (ageMs > PUBLIC_RATE_MAX_AGE_MS) {
+    const ageDays = (ageMs / (1000 * 60 * 60 * 24)).toFixed(1);
+    throw new Error(`Rate observation is stale (${ageDays} days old; max ${PUBLIC_RATE_MAX_AGE_MS / 3600000}h)`);
+  }
+  // Round to 8 decimal places — matches backend DECIMAL(18,8) schema
+  const roundedRate = Math.round(parsed * 1e8) / 1e8;
+  return {
+    rate: roundedRate,
+    inr_per_usd: parsed.toFixed(8),
+    observed_at: new Date(observedMs).toISOString(),
+    next_update_at: new Date(nextUpdateUnix * 1000).toISOString(),
+    attribution_text: PUBLIC_RATE_ATTRIBUTION,
+    attribution_url: PUBLIC_RATE_ATTRIBUTION_URL,
+    source: 'public_direct',
+  };
+}
+
+/**
+ * Fetch the USD/INR reference rate directly from open.er-api.com.
+ *
+ * - CORS-compatible (Access-Control-Allow-Origin: *)
+ * - No API key required or exposed
+ * - Validates response structure and freshness identically to the backend
+ * - Accepts an injected fetchImpl for deterministic unit tests
+ *
+ * Returns a validated rate object, or throws if unavailable / stale / invalid.
+ */
+async function fetchPublicReferenceRate({
+  fetchImpl: _fetchImpl,
+  signal,
+  timeoutMs = PUBLIC_RATE_TIMEOUT_MS,
+} = {}) {
+  // Use the injected fetchImpl (tests) or the global browser fetch
+  const fetcher = _fetchImpl || (typeof fetch !== 'undefined' ? fetch : null);
+  if (!fetcher) throw new Error('No fetch implementation available');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let abortListener;
+  if (signal) {
+    if (signal.aborted) { controller.abort(); }
+    else if (signal.addEventListener) {
+      abortListener = () => controller.abort();
+      signal.addEventListener('abort', abortListener, { once: true });
+    }
+  }
+
+  let response;
+  try {
+    response = await fetcher(PUBLIC_RATE_ENDPOINT, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      const e = new Error('Public rate fetch timed out');
+      e.code = 'TIMEOUT';
+      throw e;
+    }
+    const e = new Error('Public rate fetch network error');
+    e.code = 'NETWORK';
+    throw e;
+  } finally {
+    clearTimeout(timer);
+    if (signal && abortListener && signal.removeEventListener) {
+      signal.removeEventListener('abort', abortListener);
+    }
+  }
+
+  if (!response.ok) {
+    const e = new Error(`Public rate provider returned HTTP ${response.status}`);
+    e.status = response.status;
+    e.code = response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_HTTP_ERROR';
+    throw e;
+  }
+
+  // Guard oversized responses (matches backend MAX_RESPONSE_BYTES)
+  let text;
+  try { text = await response.text(); } catch (_) {
+    throw new Error('Public rate response unreadable');
+  }
+  if (text.length > PUBLIC_RATE_MAX_BYTES) throw new Error('Public rate response too large');
+
+  let data;
+  try { data = JSON.parse(text); } catch (_) {
+    throw new Error('Public rate response is not valid JSON');
+  }
+
+  return _validatePublicRatePayload(data, Date.now());
+}
+
 function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauthorized = () => {} }) {
   let parsed;
   try { parsed = new URL(baseUrl); } catch (_) { throw new Error('Configure a valid API base URL.'); }
@@ -109,7 +254,23 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     history: () => request('/transactions/'),
     quote: body => request('/simulation/quote',{method:'POST',body}),
     rate: () => request('/simulation/rate',{authenticated:true}),
-    getReferenceRate: async ({ signal, timeoutMs = 8000 } = {}) => {
+
+    /**
+     * getReferenceRate — public homepage rate resolution with three-tier fallback:
+     *
+     *  1. Authenticated /simulation/rate   (Render; logged-in users only)
+     *  2. Direct open.er-api.com fetch     (CORS-compatible; works when Render sleeps)
+     *  3. Unauthenticated /simulation/config (Render; public endpoint; last resort)
+     *
+     * Tier 2 allows public visitors to see a live indicative INR/USD rate
+     * even when the Render Free backend has not yet warmed up.  The rate is
+     * validated to the same freshness and range rules as the backend.
+     *
+     * The Render backend remains the authoritative source for authenticated
+     * simulation quotes and transactions.
+     */
+    getReferenceRate: async ({ signal, timeoutMs = 8000, publicFetchImpl } = {}) => {
+      // ── Tier 1: authenticated Render rate (logged-in users) ──────────────
       const session = await storage.get();
       if (session && session.token && session.expiresAt > Date.now()) {
         try {
@@ -127,23 +288,44 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
             }
           }
         } catch (err) {
-          if (err && err.status !== 401 && err.code !== 'NETWORK') throw err;
+          // Only swallow network / auth errors; rethrow unexpected ones
+          if (err && err.status !== 401 && err.code !== 'NETWORK' && err.code !== 'TIMEOUT') throw err;
         }
       }
 
-      const config = await request('/simulation/config', { authenticated: false, signal, timeoutMs });
-      if (config && config.inr_per_usd) {
-        const parsed = parseFloat(config.inr_per_usd);
-        if (Number.isFinite(parsed) && parsed > 0) {
-          return {
-            rate: parsed,
-            inr_per_usd: String(config.inr_per_usd),
-            observed_at: config.observed_at || null,
-            attribution_text: config.attribution_text || 'Platform Reference Rate',
-            source: 'public_config',
-          };
-        }
+      // ── Tier 2: direct open.er-api.com (public, CORS, no API key) ────────
+      // This path works independently of Render.  Errors here are non-fatal;
+      // we fall through to tier 3 so the UI can still try Render config.
+      try {
+        const publicRate = await fetchPublicReferenceRate({
+          fetchImpl: publicFetchImpl || fetchImpl,
+          signal,
+          timeoutMs,
+        });
+        return publicRate; // source: 'public_direct'
+      } catch (_publicErr) {
+        // Tier 2 failure is expected when offline or rate-limited — fall through
       }
+
+      // ── Tier 3: unauthenticated /simulation/config (Render public endpoint) ──
+      try {
+        const config = await request('/simulation/config', { authenticated: false, signal, timeoutMs });
+        if (config && config.inr_per_usd) {
+          const parsed = parseFloat(config.inr_per_usd);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            return {
+              rate: parsed,
+              inr_per_usd: String(config.inr_per_usd),
+              observed_at: config.observed_at || null,
+              attribution_text: config.attribution_text || 'Platform Reference Rate',
+              source: 'public_config',
+            };
+          }
+        }
+      } catch (_configErr) {
+        // Render is sleeping — all tiers exhausted
+      }
+
       const err = new Error('Reference rate temporarily unavailable');
       err.status = 503;
       throw err;
@@ -275,4 +457,4 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
     async logout() { await storage.clear(); onUnauthorized(); }
   };
 }
-module.exports = { createClient };
+module.exports = { createClient, fetchPublicReferenceRate, _validatePublicRatePayload, PUBLIC_RATE_ENDPOINT, PUBLIC_RATE_MAX_AGE_MS, PUBLIC_RATE_ATTRIBUTION };

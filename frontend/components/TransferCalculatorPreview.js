@@ -155,11 +155,11 @@ export default function TransferCalculatorPreview({ onGetStarted }) {
 
         <View style={styles.divider} />
 
-        {/* Dynamic Reference Exchange Rate Section */}
+        {/* Indicative Reference Rate Section (public, direct from open.er-api.com) */}
         <View style={styles.breakdownRow}>
           <View style={styles.breakdownLeft}>
             <Text style={styles.breakdownIcon}>⚡</Text>
-            <Text style={styles.breakdownLabel}>Reference Exchange Rate</Text>
+            <Text style={styles.breakdownLabel}>Indicative Reference Rate</Text>
           </View>
 
           {rateStatus === 'loading' && (
@@ -193,8 +193,8 @@ export default function TransferCalculatorPreview({ onGetStarted }) {
 
         {rateStatus === 'ready' && (
           <Text style={styles.rateSubtext}>
-            Indicative benchmark • {rateAttribution}
-            {rateObservedAt ? ` • Observed ${new Date(rateObservedAt).toLocaleDateString()}` : ''}
+            Indicative reference rate • {rateAttribution}
+            {rateObservedAt ? ` • Observed ${new Date(rateObservedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}
           </Text>
         )}
 
@@ -219,7 +219,7 @@ export default function TransferCalculatorPreview({ onGetStarted }) {
           <>
             <Text style={styles.payoutAmount}>${usdPayout}</Text>
             <Text style={styles.payoutNotice}>
-              Locked securely upon simulated quote generation
+              Indicative estimate only — not a locked or guaranteed rate
             </Text>
           </>
         ) : rateStatus === 'loading' ? (
