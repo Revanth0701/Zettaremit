@@ -1,0 +1,46 @@
+# REVIEW ONLY: importing this blueprint creates resources; not authorized yet.
+services:
+  - type: web
+    name: zettaremit-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_MODE
+        value: cloud
+      - key: LOCAL_CREATE_TABLES
+        value: "false"
+      - key: SCHEMA_REVISION
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: INTERNAL_SERVICE_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AIVEN_HOST
+        sync: false
+      - key: AIVEN_PORT
+        sync: false
+      - key: AIVEN_DATABASE
+        value: zettaremit
+      - key: AIVEN_USER
+        sync: false
+      - key: AIVEN_PASSWORD
+        sync: false
+      - key: AIVEN_CA_PATH
+        value: /etc/secrets/aiven-ca.pem
+      - key: ENABLE_AI_ASSISTANT
+        value: "false"
+      - key: AI_PROVIDER
+        value: ollama_cloud
+      - key: AI_RETRIEVER
+        value: bm25
+      - key: OLLAMA_CLOUD_MODEL
+        value: gemma4:31b
+      - key: OLLAMA_API_KEY
+        sync: false

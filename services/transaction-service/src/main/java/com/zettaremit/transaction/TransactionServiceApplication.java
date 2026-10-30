@@ -1,0 +1,11 @@
+package com.zettaremit.transaction;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication(exclude = {org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class, org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class})
+public class TransactionServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TransactionServiceApplication.class, args);
+    }
+}

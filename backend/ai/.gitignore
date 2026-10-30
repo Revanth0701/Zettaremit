@@ -1,0 +1,3 @@
+# Local ChromaDB vector database storage
+chroma_data/
+.chroma/

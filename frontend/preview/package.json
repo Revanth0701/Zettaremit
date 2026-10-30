@@ -1,0 +1,18 @@
+{
+  "name": "zettaremit-local-dashboard-preview",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "web": "expo start --web --localhost --port 8081"
+  },
+  "dependencies": {
+    "expo": "~54.0.33",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-web": "^0.21.0",
+    "@expo/metro-runtime": "~6.1.2",
+    "expo-crypto": "~15.0.9"
+  }
+}

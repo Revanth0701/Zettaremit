@@ -1,0 +1,1 @@
+"%USERPROFILE%\AppData\Local\Programs\Python\Python312\python.exe" -m uvicorn main:app --reload --host 127.0.0.1 --no-access-log

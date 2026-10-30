@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+SQLAlchemy
+PyMySQL[rsa]
+python-dotenv
+passlib[bcrypt]
+pandas
+email-validator
+PyJWT
+httpx
+
+# Passlib 1.7.4 requires this compatible bcrypt API; validated in the container.
+bcrypt==4.0.1

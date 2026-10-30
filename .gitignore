@@ -1,0 +1,83 @@
+.env
+__pycache__/
+*.pyc
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Java
+.gradle/
+build/
+bin/
+
+# React Native / Expo
+node_modules/
+.expo/
+dist/
+
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Java
+.gradle/
+build/
+bin/
+
+# Frontend
+node_modules/
+.expo/
+dist/
+# ZettaRemit local secrets and generated files
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+
+.local-backups/
+*.sql
+*.dump
+*.pem
+*.key
+*.p12
+*.jks
+*.cloud.csv
+
+# Reviewable migrations contain no data or secrets
+!backend/migrations/*.sql
+
+# Private ETL output; existing tracked copy still requires release review.
+backend/daily_remittance_summary.csv
+
+# Generated PowerShell cache, not application source.
+Microsoft/Windows/PowerShell/ModuleAnalysisCache
