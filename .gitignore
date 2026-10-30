@@ -1,83 +1,56 @@
-.env
-__pycache__/
-*.pyc
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-
-# Environment variables
+# Environment & Secret Configuration
 .env
 .env.*
 !.env.example
-
-# Local databases
-*.db
-*.sqlite
-*.sqlite3
-
-# Java
-.gradle/
-build/
-bin/
-
-# React Native / Expo
-node_modules/
-.expo/
-dist/
-
-
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-
-# Local databases
-*.db
-*.sqlite
-*.sqlite3
-
-# Java
-.gradle/
-build/
-bin/
-
-# Frontend
-node_modules/
-.expo/
-dist/
-# ZettaRemit local secrets and generated files
-.env
-.env.*
-!.env.example
-__pycache__/
-*.pyc
-*.db
-*.sqlite
-*.sqlite3
-
-.local-backups/
-*.sql
-*.dump
 *.pem
 *.key
 *.p12
 *.jks
-*.cloud.csv
+.local-backups/
 
-# Reviewable migrations contain no data or secrets
+# Databases & Migration Artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
 !backend/migrations/*.sql
 
-# Private ETL output; existing tracked copy still requires release review.
-backend/daily_remittance_summary.csv
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv*
+venv*
+env*
+*.egg-info/
+.pytest_cache/
 
-# Generated PowerShell cache, not application source.
+# Java & Gradle
+.gradle/
+**/build/
+**/bin/
+**/out/
+!services/transaction-service/gradle/wrapper/gradle-wrapper.jar
+
+# Frontend (React Native & Expo)
+**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Operating System & IDE Caches
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local ETL, Reports & Logs
+backend/daily_remittance_summary.csv
+*.cloud.csv
+*.log
 Microsoft/Windows/PowerShell/ModuleAnalysisCache
