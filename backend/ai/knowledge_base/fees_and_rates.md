@@ -31,7 +31,7 @@ All currency arithmetic is calculated using high-precision decimal numbers, roun
   - Recipient gets: $1,154.76 USD
 
 ## Exchange Rate Provider & Freshness Rules
-- **Live Provider**: Exchange rates are sourced from ExchangeRate-API Open Access (`https://open.er-api.com/v6/latest/USD`).
+- **Reference Rate Provider**: Indicative exchange-rate snapshots are sourced from ExchangeRate-API Open Access (`https://open.er-api.com/v6/latest/USD`); this is not a real-time or tick-by-tick market feed.
 - **Precision**: Exchange rates are represented as high-precision decimals with 8 decimal places (`DECIMAL(18,8)`).
 - **Daily Refresh Schedule**: The provider publishes updated daily reference rates once per day.
 - **In-Memory Caching**: The backend caches the latest exchange rate snapshot in memory. Outbound provider requests are throttled to at most once per hour (3600 seconds) or when the provider's scheduled `next_update_at` has passed.

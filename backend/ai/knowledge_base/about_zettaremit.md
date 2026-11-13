@@ -23,7 +23,7 @@ ZettaRemit is an educational cross-border remittance simulation application. It 
 
 ## Core Capabilities
 - Self-service user registration and authentication.
-- Real-time exchange rate retrieval from a live market reference rate provider.
+- Indicative daily reference-rate snapshots from an external provider, subject to backend caching; rates are not a real-time or tick-by-tick market feed.
 - Cryptographically signed exchange quotes valid for 5 minutes.
 - Transfer creation with client-side idempotency protection.
 - Chronological simulated transaction history review.
