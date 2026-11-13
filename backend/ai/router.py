@@ -30,7 +30,7 @@ ai_router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-# Maximum 1 concurrent generation to protect local CPU / Ollama daemon from starvation
+# Limit concurrent generation to bound AI resource usage
 AI_SEMAPHORE = asyncio.Semaphore(1)
 
 # Abuse protection: Maximum 15 requests per minute per client IP
@@ -223,36 +223,6 @@ async def ask_assistant_endpoint(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="Gemini service is temporarily unavailable. Please retry shortly."
                 )
-            elif "401" in err_msg or "Unauthorized" in err_msg or "API key" in err_msg:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Ollama Cloud authentication failed. Check OLLAMA_API_KEY."
-                )
-            elif "402" in err_msg or "403" in err_msg or "credits" in err_msg.lower() or "subscription" in err_msg.lower():
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Ollama Cloud credits exhausted or model requires a paid plan."
-                )
-            elif "404" in err_msg or "not found" in err_msg.lower():
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Requested model '{rag_response.model}' was not found on {rag_response.provider}."
-                )
-            elif "429" in err_msg or "rate limit" in err_msg.lower():
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Ollama rate limit exceeded. Please wait a moment and retry."
-                )
-            elif "Cannot connect" in err_msg or "ConnectionError" in err_msg or "unreachable" in err_msg.lower():
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=f"AI assistant service is currently unavailable on {rag_response.provider}."
-                )
-            elif "timed out" in err_msg.lower():
-                raise HTTPException(
-                    status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                    detail="AI assistant request timed out while generating response."
-                )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -374,11 +344,11 @@ async def ai_health():
     """
     try:
         service = get_rag_service()
-        health_info = service.ollama.check_health()
+        health_info = service.gemini.check_health()
         return {
             "status": "ok" if health_info.get("model_ready", False) else "degraded",
-            "provider": service.ollama.provider,
-            "model": service.ollama.model,
+            "provider": service.gemini.provider,
+            "model": service.gemini.model,
             "model_ready": bool(health_info.get("model_ready", False)),
             "enabled": True
         }

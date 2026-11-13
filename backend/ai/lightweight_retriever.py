@@ -7,7 +7,6 @@ Achieves 100% retrieval accuracy on the 45-question ZettaRemit evaluation benchm
 
 from collections import Counter, defaultdict
 import math
-import os
 from pathlib import Path
 import re
 from typing import Any, Dict, List, Optional
@@ -261,7 +260,7 @@ def get_lightweight_retriever() -> BM25Retriever:
     """Return the global cached BM25Retriever, indexing on first access in memory."""
     global _GLOBAL_LIGHTWEIGHT_RETRIEVER
     if _GLOBAL_LIGHTWEIGHT_RETRIEVER is None:
-        from .index_knowledge import load_markdown_files, split_markdown_into_chunks
+        from .markdown_utils import load_markdown_files, split_markdown_into_chunks
 
         kb_dir = Path(__file__).resolve().parent / "knowledge_base"
         raw_docs = load_markdown_files(kb_dir)

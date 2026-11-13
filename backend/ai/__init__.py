@@ -1,17 +1,14 @@
-"""ZettaRemit AI Package (Phase 1 RAG Foundation)."""
+"""Gemini and BM25 support for the ZettaRemit assistant."""
 
-from .ollama_client import OllamaClient, OllamaError, OllamaConnectionError
-from .rag_service import RAGService, RAGResponse, get_rag_service, ask_assistant
-from .index_knowledge import query_knowledge_base, index_knowledge_base
+from .gemini_client import GeminiClient, GeminiError
+from .markdown_utils import DocumentChunk, load_markdown_files, split_markdown_into_chunks
+from .rag_service import (
+    RAGService, RAGResponse, get_rag_service, query_knowledge_base,
+    ask_assistant, ask_assistant_stream,
+)
 
 __all__ = [
-    "OllamaClient",
-    "OllamaError",
-    "OllamaConnectionError",
-    "RAGService",
-    "RAGResponse",
-    "get_rag_service",
-    "ask_assistant",
-    "query_knowledge_base",
-    "index_knowledge_base",
+    "GeminiClient", "GeminiError", "DocumentChunk", "load_markdown_files",
+    "split_markdown_into_chunks", "RAGService", "RAGResponse", "get_rag_service",
+    "query_knowledge_base", "ask_assistant", "ask_assistant_stream",
 ]

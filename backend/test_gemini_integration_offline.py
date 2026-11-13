@@ -146,8 +146,8 @@ class TestGeminiClientOffline(unittest.TestCase):
             "backend.ai.rag_service.query_knowledge_base",
             return_value=[{"source": "about_zettaremit.md", "text": "Verified context"}],
         ):
-            service = RAGService(provider="gemini")
-            self.assertEqual(service.ollama.provider, "gemini")
+            service = RAGService()
+            self.assertEqual(service.gemini.provider, "gemini")
             events = list(service.answer_stream("What is ZettaRemit?"))
 
         self.assertEqual(events[0], {"type": "start", "sources": ["about_zettaremit.md"]})
@@ -168,7 +168,7 @@ class TestGeminiClientOffline(unittest.TestCase):
         }
 
         with patch("backend.ai.rag_service.query_knowledge_base", return_value=[retrieved]):
-            response = RAGService(provider="gemini").answer("What is ZettaRemit?")
+            response = RAGService().answer("What is ZettaRemit?")
 
         self.assertEqual(response.provider, "gemini")
         self.assertEqual(response.model, "gemini-3.1-flash-lite")
@@ -190,7 +190,7 @@ class TestGeminiClientOffline(unittest.TestCase):
 
         with patch("backend.ai.rag_service.query_knowledge_base", return_value=[retrieved]):
             events = list(
-                RAGService(provider="gemini").answer_stream("How does ZettaRemit work?")
+                RAGService().answer_stream("How does ZettaRemit work?")
             )
 
         self.assertEqual(events[0], {"type": "start", "sources": ["about_zettaremit.md"]})
@@ -202,10 +202,10 @@ class TestGeminiClientOffline(unittest.TestCase):
         prompt = self.sdk.models.generate_content_stream.call_args.kwargs["contents"][-1]
         self.assertIn(retrieved["text"], prompt.parts[0].text)
 
-    def test_ai_provider_environment_selects_gemini(self):
-        with patch.dict(os.environ, {"AI_PROVIDER": "gemini"}):
+    def test_default_service_uses_gemini_without_provider_configuration(self):
+        with patch.dict(os.environ, {}, clear=True):
             service = RAGService()
-        self.assertEqual(service.ollama.provider, "gemini")
+        self.assertEqual(service.gemini.provider, "gemini")
 
     def test_upstream_auth_error_does_not_invalidate_user_session(self):
         from fastapi import FastAPI

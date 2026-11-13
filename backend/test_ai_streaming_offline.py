@@ -5,7 +5,7 @@ import json
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.ai.ollama_client import OllamaClient, OllamaConnectionError
+from backend.ai.gemini_client import GeminiClient
 from backend.ai.rag_service import RAGService
 from backend.ai.router import ai_router
 from backend.auth import issue_access_token
@@ -61,12 +61,12 @@ class TestAIStreamingOffline(unittest.TestCase):
 
     def test_answer_stream_yields_correct_events_with_mock_client(self):
         """RAGService.answer_stream yields start, chunk, and done events."""
-        mock_ollama = MagicMock(spec=OllamaClient)
-        mock_ollama.provider = "test_provider"
-        mock_ollama.model = "test_model"
-        mock_ollama.chat_stream.return_value = iter(["Hello", " world", "!"])
+        mock_gemini = MagicMock(spec=GeminiClient)
+        mock_gemini.provider = "test_provider"
+        mock_gemini.model = "test_model"
+        mock_gemini.chat_stream.return_value = iter(["Hello", " world", "!"])
 
-        service = RAGService(ollama_client=mock_ollama)
+        service = RAGService(gemini_client=mock_gemini)
         events = list(service.answer_stream("What is ZettaRemit?"))
 
         types = [e["type"] for e in events]
