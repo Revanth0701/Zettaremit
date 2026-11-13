@@ -211,7 +211,7 @@ export default function AIAssistantScreen({ navigation }) {
         );
       }
     } catch (err) {
-      if (!receivedStream && typeof api.aiAsk === 'function' && err.code !== 'ABORT') {
+      if (!receivedStream && typeof api.aiAsk === 'function' && err.code !== 'ABORT' && err.code !== 'STREAM_ERROR') {
         try {
           const response = await api.aiAsk(trimmed, sessionId);
           setMessages(prev =>
@@ -237,9 +237,9 @@ export default function AIAssistantScreen({ navigation }) {
       if (err.status === 429) {
         friendlyError = 'The AI assistant is busy processing another query. Please wait a moment and retry.';
       } else if (err.status === 503) {
-        friendlyError = 'The local AI service is unavailable. Please ensure the local Ollama server is running.';
+        friendlyError = 'The AI assistant service is temporarily unavailable. Please try again shortly.';
       } else if (err.status === 504 || err.code === 'TIMEOUT') {
-        friendlyError = 'The AI generation timed out. Local CPU inference took longer than expected. Please try a shorter question.';
+        friendlyError = 'The AI generation timed out. Please try a shorter question or retry shortly.';
       } else if (err.code === 'NETWORK') {
         friendlyError = 'Network connection to the API failed. Please verify your backend server connection.';
       } else if (err.message) {

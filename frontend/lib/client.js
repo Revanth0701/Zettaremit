@@ -415,27 +415,26 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
             for (const line of lines) {
               const trimmed = line.trim();
               if (trimmed.startsWith('data: ')) {
+                let evt;
                 try {
-                  const evt = JSON.parse(trimmed.slice(6));
-                  if (evt.type === 'start') {
-                    if (evt.sources) {
-                      sources = evt.sources;
-                      if (onSources) onSources(sources);
-                    }
-                  } else if (evt.type === 'chunk') {
-                    const chunk = evt.content || '';
-                    fullText += chunk;
-                    if (onChunk) onChunk(chunk, fullText);
-                  } else if (evt.type === 'done') {
-                    if (evt.sources) sources = evt.sources;
-                    if (typeof evt.latency_seconds === 'number') latency = evt.latency_seconds;
-                  } else if (evt.type === 'error') {
-                    const streamErr = new Error(evt.error || 'AI generation failed');
-                    if (onError) onError(streamErr);
-                    throw streamErr;
+                  evt = JSON.parse(trimmed.slice(6));
+                } catch (_) { continue; }
+                if (evt.type === 'start') {
+                  if (evt.sources) {
+                    sources = evt.sources;
+                    if (onSources) onSources(sources);
                   }
-                } catch (pe) {
-                  if (pe.message && pe.message.includes('AI generation failed')) throw pe;
+                } else if (evt.type === 'chunk') {
+                  const chunk = evt.content || '';
+                  fullText += chunk;
+                  if (onChunk) onChunk(chunk, fullText);
+                } else if (evt.type === 'done') {
+                  if (evt.sources) sources = evt.sources;
+                  if (typeof evt.latency_seconds === 'number') latency = evt.latency_seconds;
+                } else if (evt.type === 'error') {
+                  const streamErr = new Error(evt.error || 'AI generation failed. Please retry.');
+                  streamErr.code = 'STREAM_ERROR';
+                  throw streamErr;
                 }
               }
             }

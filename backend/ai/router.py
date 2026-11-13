@@ -191,7 +191,39 @@ async def ask_assistant_endpoint(
         # 8. Check for service or retrieval errors
         if rag_response.error:
             err_msg = rag_response.error
-            if "401" in err_msg or "Unauthorized" in err_msg or "API key" in err_msg:
+            if rag_response.provider == "gemini" and "api key is not configured" in err_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Gemini API key is not configured. Set GEMINI_API_KEY."
+                )
+            elif rag_response.provider == "gemini" and "authentication" in err_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Gemini authentication failed. Verify GEMINI_API_KEY configuration."
+                )
+            elif rag_response.provider == "gemini" and (
+                "quota" in err_msg.lower() or "rate limit" in err_msg.lower()
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Gemini quota or rate limit exceeded. Please retry later."
+                )
+            elif rag_response.provider == "gemini" and "model" in err_msg.lower() and "unavailable" in err_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Configured Gemini model '{rag_response.model}' is unavailable."
+                )
+            elif rag_response.provider == "gemini" and "timed out" in err_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                    detail="Gemini request timed out. Please retry."
+                )
+            elif rag_response.provider == "gemini" and "temporarily unavailable" in err_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Gemini service is temporarily unavailable. Please retry shortly."
+                )
+            elif "401" in err_msg or "Unauthorized" in err_msg or "API key" in err_msg:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Ollama Cloud authentication failed. Check OLLAMA_API_KEY."
@@ -305,8 +337,11 @@ async def ask_assistant_stream_endpoint(
                 try:
                     for event in service.answer_stream(sanitized_question, session_id=scoped_session_id):
                         asyncio.run_coroutine_threadsafe(queue.put(event), loop).result()
-                except Exception as ex:
-                    asyncio.run_coroutine_threadsafe(queue.put({"type": "error", "error": str(ex)}), loop).result()
+                except Exception:
+                    asyncio.run_coroutine_threadsafe(
+                        queue.put({"type": "error", "error": "AI assistant request failed. Please retry."}),
+                        loop,
+                    ).result()
                 finally:
                     asyncio.run_coroutine_threadsafe(queue.put(sentinel), loop).result()
 
