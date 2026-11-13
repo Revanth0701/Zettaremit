@@ -210,6 +210,38 @@ test('client aiAskStream streams chunks progressively, attaches Bearer token, an
   assert.deepEqual(result.sources, ['about_zettaremit.md'], 'Must track retrieved sources');
 });
 
+test('client aiAskStream rejects SSE error events instead of completing with a blank answer', async () => {
+  const chunks = [
+    'data: {"type":"start","sources":[]}\n\n',
+    'data: {"type":"error","error":"Gemini quota or rate limit exceeded. Please retry later."}\n\n'
+  ];
+  let streamReadIdx = 0;
+  const client = createClient({
+    baseUrl: 'https://api.example.com',
+    storage: { get: async () => ({ token: 'mock-stream-jwt', expiresAt: Date.now() + 60000 }), set: async () => {}, clear: async () => {} },
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: async () => streamReadIdx < chunks.length
+            ? { done: false, value: new TextEncoder().encode(chunks[streamReadIdx++]) }
+            : { done: true, value: undefined }
+        })
+      }
+    })
+  });
+  let completed = false;
+
+  await assert.rejects(
+    () => client.aiAskStream('Question', 'session-stream-test', {
+      onDone: () => { completed = true; }
+    }),
+    error => error.code === 'STREAM_ERROR' && /Gemini quota or rate limit exceeded/.test(error.message)
+  );
+  assert.equal(completed, false, 'An SSE error must not trigger successful completion with empty text');
+});
+
 test('DashboardScreen and AIAssistantScreen adhere to final professional UI polish standards', () => {
   const dashPath = path.join(__dirname, '..', 'screens', 'DashboardScreen.js');
   const dashCode = fs.readFileSync(dashPath, 'utf8');
@@ -273,4 +305,3 @@ test('Authenticated navigation provides permanent ZettaAI Assistant entry points
     'AIAssistantScreen must allow returning to Dashboard'
   );
 });
-

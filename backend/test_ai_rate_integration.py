@@ -74,6 +74,36 @@ class TestAIRateIntegration(unittest.TestCase):
         self.assertIn("flat 3% transfer fee", ctx)
         self.assertIn("Indian Rupees (INR) to US Dollars (USD)", ctx)
 
+    def test_freshness_guidance_reaches_generation_and_forbids_real_time_claims(self):
+        """Grounded RAG instructions must contradict stale real-time capability claims."""
+        mock_client = MagicMock()
+        mock_client.provider = "test"
+        mock_client.model = "test-model"
+        mock_client.chat.return_value = "The indicative reference rate is available."
+
+        with patch(
+            "backend.ai.rag_service.query_knowledge_base",
+            return_value=[{
+                "source": "about_zettaremit.md",
+                "section": "Core Capabilities",
+                "text": "Indicative daily reference-rate snapshots subject to caching.",
+            }],
+        ):
+            service = RAGService(ollama_client=mock_client, rate_provider=self.mock_provider)
+            service.answer("What exchange rate does ZettaRemit use?")
+
+        call_kwargs = mock_client.chat.call_args.kwargs
+        system_prompt = call_kwargs["system_prompt"]
+        user_prompt = call_kwargs["user_message"]
+        self.assertIn("NEVER describe ZettaRemit's rates or rate retrieval as real-time", system_prompt)
+        self.assertIn("provider publishes indicative reference rates once per day", system_prompt)
+        self.assertIn("up to 96 hours", system_prompt)
+        self.assertIn(
+            "updated daily for simulation purposes (not a live tick-by-tick market feed)",
+            user_prompt,
+        )
+        self.assertIn("2026-10-27 00:02:31 UTC", user_prompt)
+
     def test_today_rate_inquiry_context(self):
         """Questions like 'What's today's INR to USD rate?' must retrieve current rate context."""
         ctx = get_exchange_rate_context("What's today's INR to USD rate?", provider=self.mock_provider)
