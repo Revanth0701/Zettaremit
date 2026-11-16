@@ -16,11 +16,14 @@ No secrets in EXPO_PUBLIC variables. Rebuild for URL changes.
 Render Free has idle/capacity limits and is for a demo, not a financial production SLA.
 Health is liveness only. No migration, ETL or service deployment occurs automatically.
 
-Security review: PostCSS is overridden to patched 8.5.23. Five high npm package entries
-remain in build tooling: expo, @expo/cli, @expo/code-signing-certificates, node-forge,
-image-size. node-forge has no published patch at review; image-size fix needs a major
-Metro integration. Owner must review/accept this scoped build risk or remediate before
-public release. Build trusted source/assets only; never publish a dev server or node_modules.
+Security review (2026-11-16): see PRODUCTION_DEPLOYMENT_READINESS.md for current evidence.
+node-forge was patched compatibly to 1.4.3. Current npm audit reports one high
+(image-size), 11 moderate and one low finding. image-size has no patched 1.x;
+Metro 0.83.3 passes paths to its synchronous API, which v2 removes. Do not force
+an incompatible override or Expo major upgrade. Resolve or explicitly review the
+remaining build-tool risk before release. Build trusted source/assets only;
+never publish a dev server or node_modules. Production schema/backup and memory
+headroom verification remain release gates. No risk acceptance is implied.
 
 Environment examples are placeholders. Preserve restricted runtime grants:
 SELECT/INSERT users and transactions; INSERT user_verifications. Audit/migrate separately.

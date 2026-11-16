@@ -1,0 +1,422 @@
+{
+  "audit_date": "2026-11-16",
+  "status": "BLOCKED_NOT_DEPLOYED",
+  "release_version": null,
+  "candidate_base_commit": "5bbfde9446e0ea825a89f820832cfc74a3cf36a9",
+  "candidate_commit": null,
+  "local_branch": "feature/gemini-ai-cleanup",
+  "repositories": {
+    "origin": "Revanth0701/Zettaremit",
+    "prod_remote": "Revanth0701/ZettaRemit-App",
+    "private_main_at_audit": "87f1f66729f208bf55ad6ceb02f98202923c1ad5",
+    "production_mapping": "Render MCP verified private repo main; Cloudflare repo owner-confirmed, deployment settings unverified",
+    "frontend_production_repository": "Revanth0701/ZettaRemit-App",
+    "frontend_repository_evidence": "Owner confirmed 2026-11-15"
+  },
+  "production": {
+    "frontend_url": "https://zettaremit-app.pages.dev",
+    "backend_url": "https://zettaremit-app.onrender.com",
+    "public_get_http_status": {
+      "frontend": 200,
+      "backend_health": 200
+    },
+    "render_service_id": "srv-dbdv8o3ncjis73dkflag",
+    "render_deployment_id": "dep-dbr7a46c6qcc73d225r0",
+    "pages_project_id": null,
+    "pages_deployment_id": null,
+    "deployed_commit": "6c6881547e265ac9a7f5de416dd768f571afec31",
+    "deployment_branches": null,
+    "database_identity_verified": false,
+    "schema_compatibility": "UNKNOWN",
+    "backup_restore_verified": false,
+    "java_runtime_verified": false,
+    "frontend_repository_owner_confirmed": true,
+    "cors_pages_origin_preflight": "PASS_200_EXACT_ORIGIN_AUTHORIZATION_ALLOWED",
+    "render_service_name": "ZettaRemit-App",
+    "render_workspace_id": "tea-d8d35lmk1jcs738i7n2g",
+    "render_workspace": "My Workspace",
+    "render_auto_deploy": false,
+    "render_runtime": "docker",
+    "render_plan": "free",
+    "render_instances": 1,
+    "render_health_check_path": "",
+    "render_region": "oregon",
+    "production_ai_health": {
+      "http_status": 200,
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "enabled": true,
+      "key_presence_evidenced": true,
+      "api_entitlement_verified": false
+    },
+    "production_memory_metrics": "EMPTY_SERIES"
+  },
+  "tests": {
+    "backend_passed": 191,
+    "frontend_passed": 104,
+    "java_passed": 10,
+    "production_frontend_export": "PASS_WITH_EXPLICIT_HTTPS_API_AND_DOTENV_DISABLED",
+    "linux_dependency_resolution": "PASS_DRY_RUN_ONLY",
+    "docker_runtime": "PASS_FUNCTIONAL_MEMORY_HEADROOM_BLOCKED",
+    "npm_audit": {
+      "high": 1,
+      "moderate": 11,
+      "low": 1,
+      "critical": 0,
+      "total": 13
+    },
+    "production_ai": "CONFIGURATION_HEALTH_ONLY_NO_LIVE_GENERATION_OR_EMBEDDINGS",
+    "docker_build": "PASS",
+    "linux_backend_passed": 191,
+    "isolated_container": {
+      "network": "none",
+      "host_mounts": false,
+      "published_ports": false,
+      "memory_limit_mib": 512,
+      "startup_seconds": 78.02,
+      "security": {
+        "health": 200,
+        "missing_token": 401,
+        "invalid_token": 401,
+        "java_missing_token": 401,
+        "java_wrong_token": 401,
+        "legacy_java_path": 404,
+        "java_loopback_only": true,
+        "java_secret_isolation": true,
+        "non_root": true,
+        "strict_tls": true
+      },
+      "integration": {
+        "agent_modules_and_tools": true,
+        "pinned_sdk_and_bcrypt": true,
+        "authenticated_java_v2_calculation": true,
+        "bcrypt_hash_verify": true,
+        "knowledge_documents": 8,
+        "knowledge_chunks": 39,
+        "retrieval_mode": "bm25_offline_fallback",
+        "live_gemini_calls": 0,
+        "mysql_connections": 0
+      },
+      "pip_check": true,
+      "linux_backend_tests_passed": true,
+      "linux_test_suite_counts": [
+        "173",
+        "18"
+      ],
+      "memory": {
+        "memory.current": 366260224,
+        "memory.peak": 536875008,
+        "memory.max": 536870912
+      },
+      "image_id": "sha256:038819aea1ee140969ecf9d564db808cedbf1df738ff1e360316e72d110fe3b8",
+      "shutdown_exit_code": 0,
+      "oom_killed": false,
+      "passed": true
+    }
+  },
+  "configuration_checklist": "docs/PRODUCTION_DEPLOYMENT_READINESS.md",
+  "rollback_plan": "docs/PRODUCTION_ROLLBACK_PLAN.md",
+  "schema_changes_in_ai_candidate": false,
+  "migration_dependency": "MODELS_MATCH_DEPLOYED_SOURCE; ACTUAL_PRODUCTION_SCHEMA_UNKNOWN; NO_DDL_APPROVED",
+  "excluded": [
+    ".vscode/",
+    "backend/.env",
+    "frontend/.env.local",
+    ".local-backups/",
+    "local and production database contents",
+    "credentials and certificate files",
+    "node_modules/",
+    "generated Java build output"
+  ],
+  "files": [
+    {
+      "path": "backend/ai/agent.py",
+      "sha256_worktree_bytes": "8ca03d3d330a0addd29ee8210dd1009c6d85402857c72c93fa09b864192717ef",
+      "git_state": "untracked",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/ai/agent_router.py",
+      "sha256_worktree_bytes": "eeed49965c44595da9b97315ad94a9b13b0298461bc5e7e45332d6456b42eddf",
+      "git_state": "untracked",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/ai/gemini_client.py",
+      "sha256_worktree_bytes": "ff164b89ca54fae5d823f2d6e0f84cedb522aaa7ba47eb6229d28c3f8e9d6ea5",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/ai/hybrid.py",
+      "sha256_worktree_bytes": "f275c8de408876c4a7fdd6fbcd75704b162018d7f9505e9aa6e833a97a3a69a8",
+      "git_state": "untracked",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/ai/rag_service.py",
+      "sha256_worktree_bytes": "15617aa8cc318b86f165eb6ce1f7f0f26b83c04e19d4669dd62f9744e0da43b9",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/ai/router.py",
+      "sha256_worktree_bytes": "ed5f20efa758ee096528c00d416ce3953c6383a432959672c6531dfde5266aa9",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/main.py",
+      "sha256_worktree_bytes": "a85a290aec937904544680a6cf0d35890373a628d64043abb789a982844a8034",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/requirements-container.lock",
+      "sha256_worktree_bytes": "b212a6203844d43cdc39c98eaf7f00df457ef9260eafa9f7140a45accfc4c70a",
+      "git_state": "modified",
+      "category": "release_configuration",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/test_agent_history_offline.py",
+      "sha256_worktree_bytes": "b55966c7006f502fb48ee0510c23d01d6c9eacbd1d45b7c74490d04c0d8bbec4",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "backend/test_hybrid_agent_offline.py",
+      "sha256_worktree_bytes": "9ec4890b90e12c377d116c68d9dec01af5f3c0aac3780b4f47123a58a7df5d58",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "deployment/.env.example",
+      "sha256_worktree_bytes": "9428af681383e58ba891dfafcb03cb60591e087c412af2ae918e29caa5da0376",
+      "git_state": "modified",
+      "category": "release_configuration",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/AI_UPGRADE.md",
+      "sha256_worktree_bytes": "96fc18e47dc46ac9ffb40bea3c5b6a1016f2e81cf7ec3597d295a97be7b42420",
+      "git_state": "untracked",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/LOCAL_AI_TESTING.md",
+      "sha256_worktree_bytes": "5faaa1a562419e4063dadf713b5c8d1470797f99b5629216ea0182251c308cd4",
+      "git_state": "untracked",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/LOCAL_BROWSER_VERIFICATION.md",
+      "sha256_worktree_bytes": "5a0685415828442428f4ae88fe1a07915c6c429c8bef32b1bef38065e3106ed4",
+      "git_state": "untracked",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/PRODUCTION_DEPLOYMENT_READINESS.md",
+      "sha256_worktree_bytes": "5e29e0d1c9886d2a91058c273cabb720782a7b3811e9247b4b9adec33a6ac394",
+      "git_state": "untracked",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/PRODUCTION_ROLLBACK_PLAN.md",
+      "sha256_worktree_bytes": "0b470ba97fe3af8690ed01beed27643d8c45b21f364da7b12284c656f2181092",
+      "git_state": "untracked",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "docs/RELEASE.md",
+      "sha256_worktree_bytes": "894fe1c997821c408cfd0a7f7efd545b426e6becab22e8823b8909578d3b4a2e",
+      "git_state": "modified",
+      "category": "documentation",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "frontend/lib/aiStream.js",
+      "sha256_worktree_bytes": "779cc35e1c2e4a7e4c3305d9113e64c162a1f51caaaa2201839b5c6b7e92e98c",
+      "git_state": "untracked",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "frontend/lib/client.js",
+      "sha256_worktree_bytes": "4eb5a9b6af1724561018d6fe7c8baedb142ceafd6af6035bb1bd05927a09d829",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256_worktree_bytes": "61341a3e8a82964a1df93c133054c09e416fd94c04da4f81fe085a38bbd47f59",
+      "git_state": "modified",
+      "category": "release_configuration",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "frontend/screens/AIAssistantScreen.js",
+      "sha256_worktree_bytes": "23bb9c447923bb4200aac5eec6b20a647b1fc628539570eac4f19f753368bf18",
+      "git_state": "modified",
+      "category": "application",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "frontend/tests/ai_stream.test.cjs",
+      "sha256_worktree_bytes": "945b11fd19304d84e27775b0c518155c2aef12c45f50c138473f3334ad3eca8a",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "render.yaml",
+      "sha256_worktree_bytes": "a1d4b22b6c4bd2be0183930f6e54b83ce90221f1de6bcbe3b7286d9473d956e3",
+      "git_state": "modified",
+      "category": "release_configuration",
+      "runtime_required": true,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "tools/start_local_demo.py",
+      "sha256_worktree_bytes": "1a99fb549d143e97eadac744d597a835914764641e171c451b1bc0d21222cea8",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": true
+    },
+    {
+      "path": "tools/test_ai_offline.py",
+      "sha256_worktree_bytes": "8b3e47980b239222a2c86080740b274a2e5548c60a1785033a8f164163deb9ea",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    },
+    {
+      "path": "tools/test_local_ai_integration.py",
+      "sha256_worktree_bytes": "8e55ffdbb5b7710270bbfb8a600d60debc4861e43415a53af588bdb652e017c6",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": true
+    },
+    {
+      "path": "tools/test_local_browser.cjs",
+      "sha256_worktree_bytes": "bd8205615644151aab56e5193e58581473c7262be3c4dbc392cfe17f3ce891f7",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": true
+    },
+    {
+      "path": "tools/test_release_container.py",
+      "sha256_worktree_bytes": "c7fba4e369a34efd4a5640041855d8594e0b41aee6721f0c4408744c6ae837ef",
+      "git_state": "untracked",
+      "category": "test_or_local_tool",
+      "runtime_required": false,
+      "optional_developer_tool": false
+    }
+  ],
+  "build_evidence": [
+    {
+      "path": ".local-backups/production-readiness/frontend-dist/_expo/static/js/web/index-e337a84b0f8d7dfba5fefd4752cafe56.js",
+      "sha256": "d1b1bf31deafecd5747ed30a4ba65d6edfe50fbdc169468357bb9ed26083f9c9",
+      "publish_approved": false
+    }
+  ],
+  "hash_note": "Worktree byte hashes; Git newline normalization can change committed blob hashes. Regenerate for final approved SHA. Manifest intentionally excludes its own hash.",
+  "required_approvals": [
+    "commit and exact remote/branch push",
+    "production deployment trigger",
+    "any production database schema or data changes",
+    "production secret rotation",
+    "paid service changes"
+  ],
+  "blockers": [
+    "actual production database identity and schema audit",
+    "production backup/retention and isolated restore evidence",
+    "remaining high image-size and moderate/low security disposition",
+    "secure environment/secret mount validation and Gemini embedding/model/quota verification",
+    "512 MiB peak memory limit reached; actual provider headroom/cold-start validation",
+    "approved HTTP health-check path /health (currently empty)",
+    "Cloudflare settings and retained rollback deployment ID",
+    "explicit commit/push/deployment approval"
+  ],
+  "approval_state": "Owner explicitly reiterated no commit, push, deployment, production env or DB modification on 2026-11-15",
+  "local_image": {
+    "tag": "zettaremit-review:local",
+    "image_id": "sha256:038819aea1ee140969ecf9d564db808cedbf1df738ff1e360316e72d110fe3b8",
+    "published": false
+  },
+  "required_access": {
+    "integration": "Render ChatGPT plugin / official Render MCP",
+    "connection_confirmed": true,
+    "authorized_operations": [
+      "read workspace/services/service details",
+      "read deployments and commit IDs",
+      "read sanitized logs and metrics"
+    ],
+    "environment_inspection": "Current MCP has no read-env or secret-file tool; operator validation required",
+    "database": "No authorized external Aiven metadata route/backup evidence available",
+    "cloudflare": "Read Pages settings and deployment history; repository owner-confirmed",
+    "write_operations_authorized": false
+  },
+  "recommendation": "NO-GO",
+  "security_fixes": [
+    {
+      "package": "node-forge",
+      "from": "1.4.0",
+      "to": "1.4.3",
+      "change": "compatible lockfile-only patch",
+      "resolved_in_fresh_npm_audit": true
+    }
+  ],
+  "unresolved_security": {
+    "image-size": {
+      "version": "1.2.1",
+      "severity": "high",
+      "exposure": "Metro build/development parses assets; not FastAPI or static Pages runtime",
+      "fix_constraint": "v2 removes sync path API used by Metro 0.83.3; no patched 1.x"
+    },
+    "other": "11 moderate and 1 low; registry proposes Expo major upgrade; no risk acceptance"
+  },
+  "manifest_path": "docs/PRODUCTION_RELEASE_MANIFEST.json",
+  "manifest_itself_to_commit": true
+}

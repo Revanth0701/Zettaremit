@@ -1,11 +1,30 @@
 # ZettaRemit — Educational Cross-Border Remittance Simulation
 
+## Current unified release candidate
+
+The canonical source for the entire application is **Revanth0701/Zettaremit**.
+The current candidate adds Gemini Hybrid RAG (BM25F + optional semantic retrieval + RRF),
+owner-scoped agent tools, paginated transaction history with independent total/page counts,
+and authenticated streaming. AI and hosted embeddings are explicit opt-ins. Historical
+architecture descriptions below do not establish production deployment or API availability.
+
+See [repository migration plan](docs/REPOSITORY_UNIFICATION_PLAN.md),
+[AI implementation](docs/AI_UPGRADE.md), and
+[production readiness gates](docs/PRODUCTION_DEPLOYMENT_READINESS.md).
+Production schema, backups/restoration, model quotas, remaining build-tool findings and
+memory headroom require verification before deployment. No automated database migration,
+real payment, or support-ticket submission is provided. Source consolidation does not
+move accounts or transaction data. Use `python -B tools/test_ai_offline.py` for safe
+offline backend tests while local hosted AI is enabled. Prior verified tests: backend
+191, frontend 104, Java 10; these are release evidence, not a claim of new test execution.
+
+
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-zettaremit--app.pages.dev-0047AB?style=for-the-badge&logo=cloudflarepages&logoColor=white)](https://zettaremit-app.pages.dev)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20Native%20%2F%20Expo%20Web-4630EB?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%20%2F%20Python%203.12-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Microservice](https://img.shields.io/badge/Microservice-Java%2021%20%2F%20Spring%20Boot%203.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Database](https://img.shields.io/badge/Database-MySQL%208%20(Aiven%20Cloud)-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://aiven.io)
-[![AI Assistant](https://img.shields.io/badge/AI%20Assistant-BM25%20RAG%20%2B%20Ollama%20Cloud-FF6F00?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com)
+[![AI Assistant](https://img.shields.io/badge/AI%20Assistant-BM25%20RAG%20%2B%20Gemini-FF6F00?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 
 > **Educational Simulation Notice:** ZettaRemit is a full-stack software engineering portfolio project demonstrating distributed system design, secure transaction processing, and low-latency AI retrieval for an Indian Rupee (INR) to US Dollar (USD) remittance workflow. It does not move fiat currency, integrate with central banking rails, or ingest real government identity documents.
 
@@ -17,11 +36,11 @@ ZettaRemit showcases an enterprise-grade, polyglot software architecture designe
 
 ### Key Capabilities
 
-* **Multi-Tiered Exchange Rate Resiliency:** Features an automated 3-tier fallback architecture (Primary live exchange rate API → Secondary direct public gateway → Deterministic 96-hour snapshot matrix) ensuring 100% uptime for rate previews even during cloud cold starts.
+* **Multi-Tiered Exchange Rate Resiliency:** Features an automated 3-tier fallback architecture (Primary live exchange rate API → Secondary direct public gateway → validated cached snapshot (up to 96 hours)) ensuring best-effort availability for rate previews even during cloud cold starts.
 * **Cryptographically Signed Transfer Quotes:** Prevents client-side price tampering by issuing HMAC-SHA256 signatures with 5-minute time-to-live (TTL) timestamps for every exchange rate quote.
 * **Idempotent Transaction Pipeline:** Client-generated idempotency keys (`Idempotency-Key` HTTP header) enforced by database unique constraints guarantee at-most-once transfer execution across network retries.
 * **Render Free Cold-Start Readiness Polling:** The client implements an exponential-backoff health check (`GET /health`) before login submission, displaying progressive connection states ("*Connecting to ZettaRemit...*", "*This may take a moment.*") and avoiding false-positive network timeout errors.
-* **Lightweight In-Memory BM25F RAG Assistant:** An AI customer support assistant powered by a pure-Python in-memory BM25F retrieval engine and remote Ollama Cloud LLM inference (`gemma4:31b`), designed to operate within Render Free's 512 MB RAM ceiling without PyTorch or heavy vector DB dependencies.
+* **Lightweight In-Memory BM25F RAG Assistant:** An AI customer support assistant powered by a pure-Python in-memory BM25F retrieval engine and remote Gemini LLM inference (`gemini-3.1-flash-lite`), avoiding PyTorch and heavy vector DB dependencies; 512 MiB production headroom still requires validation.
 * **Zero-PII Educational KYC Simulation:** Multi-step onboarding with educational identity verification badges, avoiding the storage or transmission of real personal identification data.
 
 ---
@@ -54,7 +73,7 @@ The system follows a polyglot microservice model separating user-facing routing,
 │  ┌─────────────────────────────────────┐  ┌─────────────────────────┐  │
 │  │    TRANSACTION SERVICE (Java 21)    │  │   OLLAMA CLOUD LLM      │  │
 │  │  • Spring Boot 3.5.16 Microservice  │  │   Inference API         │  │
-│  │  • Exact BigDecimal Math            │  │   Model: gemma4:31b     │  │
+│  │  • Exact BigDecimal Math            │  │   Model: gemini-3.1-flash-lite     │  │
 │  │  • Internal Loopback Only           │  │   (Remote AI execution) │  │
 │  └─────────────────────────────────────┘  └─────────────────────────┘  │
 └───────────────────────────────────┬────────────────────────────────────┘
@@ -77,7 +96,7 @@ The system follows a polyglot microservice model separating user-facing routing,
 | **API Gateway** | Python `3.12`, FastAPI `0.161`, Pydantic `v2`, SQLAlchemy `2.x` | REST routing, JWT authentication, quote signing, rate limiting, and RAG orchestration. |
 | **Transaction Service** | Java `21`, Spring Boot `3.5.16`, Gradle `8.x`, Groovy Spock | Isolated internal microservice performing high-precision financial arithmetic. |
 | **Database** | MySQL `8.0` on Aiven Cloud, PyMySQL with SSL verification | ACID ledger storage, unique idempotency constraints, relational integrity. |
-| **AI Subsystem** | Custom BM25F Retriever, Ollama Cloud (`gemma4:31b`), SSE | Document chunking, title-boosted term retrieval, streaming AI responses under 512 MB RAM. |
+| **AI Subsystem** | Custom BM25F Retriever, Gemini (`gemini-3.1-flash-lite`), SSE | Document chunking, title-boosted term retrieval, streaming responses; production memory headroom remains a release gate. |
 | **Infrastructure** | Cloudflare Pages, Render Docker Web Service, Multi-stage Docker | Global edge frontend deployment and co-hosted containerized microservices. |
 
 ---
@@ -106,12 +125,12 @@ The system follows a polyglot microservice model separating user-facing routing,
 
 ### D. Lightweight BM25 RAG Architecture (`backend/ai/`)
 
-* **The Problem:** Hosting deep learning embedding models (e.g. PyTorch, Sentence Transformers) and local vector stores (ChromaDB) alongside FastAPI and Java exceeds the 512 MB memory limit of free cloud hosting, triggering OOM container crashes.
+* **The Problem:** Hosting deep learning embedding models (e.g. PyTorch, Sentence Transformers) and local vector stores (ChromaDB) alongside FastAPI and Java exceeds the 512 MB memory limit of free cloud hosting, and require independent resource validation; do not assume sufficient memory headroom.
 * **The Solution:** A lightweight, pure-Python BM25F (Best Matching 25 with Field Weighting) retrieval engine:
   * Indexes 8 structured Markdown knowledge base files at startup (~2 ms).
   * Computes BM25 relevance scores with configurable field boosting ($3.0\times$ title boost, keyword prioritization).
   * Consumes **< 2 MB of RAM**, leaving ample headroom for Python and Java processes.
-* **Ollama Cloud LLM Integration (`backend/ai/ollama_client.py`):** Offloads inference to Ollama Cloud running `gemma4:31b`, delivering ~1.0s inference latency while keeping local container RSS around ~295 MB.
+* **Gemini LLM Integration (`backend/ai/gemini_client.py`):** Offloads inference to Gemini running `gemini-3.1-flash-lite`, delivering ~1.0s inference latency while keeping local container RSS around ~295 MB.
 
 ---
 
@@ -150,7 +169,7 @@ ZettaRemit/
 │   ├── migrations/                         # Reviewed relational SQL migrations
 │   ├── ai/
 │   │   ├── lightweight_retriever.py        # Pure-Python in-memory BM25F retriever
-│   │   ├── ollama_client.py                # Async Ollama Cloud API client (streaming SSE)
+│   │   ├── gemini_client.py                # Async Gemini API client (streaming SSE)
 │   │   ├── rag_service.py                  # RAG context builder and prompt orchestration
 │   │   ├── router.py                       # AI API endpoints (/ai/ask, /ai/ask-stream, /ai/health)
 │   │   └── knowledge_base/                 # 8 curated domain knowledge Markdown docs
@@ -162,7 +181,7 @@ ZettaRemit/
 │   ├── components/                         # Modular UI cards, calculators, and rate tickers
 │   ├── screens/                            # DashboardScreen, LoginScreen, AIAssistantScreen, etc.
 │   ├── lib/                                # API client, readiness polling, quote flow
-│   └── tests/                              # 98 automated offline Node.js test suites
+│   └── tests/                              # 104 automated offline Node.js test suites
 ├── services/
 │   └── transaction-service/                # Java Spring Boot 3.5 calculation microservice
 │       ├── build.gradle                    # Gradle build definition
@@ -193,7 +212,7 @@ cd Zettaremit
 ```bash
 cd frontend
 npm ci
-npm test             # Runs all 98 automated unit & integration tests
+npm test             # Runs all 104 automated unit & integration tests
 npm run web          # Starts Expo Web development server on http://localhost:8081
 ```
 
@@ -209,10 +228,10 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Generate secure random local signing secrets
-python ../tools/configure_local_secrets.py
+python ../tools/configure_local_secrets.py  # local development only; preserve valid secrets
 
-# Run offline unit test suite (122 tests)
-python -m unittest discover -s . -p "test_*_offline.py"
+# Run offline unit test suite (191 tests)
+python -B ../tools/test_ai_offline.py
 
 # Start the FastAPI server on port 8000
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
@@ -233,11 +252,11 @@ cd ../services/transaction-service
 Every layer of the application is covered by comprehensive offline automated tests that do not depend on external networks or live databases:
 
 ```bash
-# 1. Run all Frontend Test Suites (98 tests)
+# 1. Run all Frontend Test Suites (104 tests)
 npm --prefix frontend test
 
-# 2. Run all Backend Test Suites (122 tests)
-python -m unittest discover -s backend -p "test_*_offline.py"
+# 2. Run all Backend Test Suites (191 tests)
+python -B tools/test_ai_offline.py
 
 # 3. Verify Production Web Bundle Export
 npm --prefix frontend run build:web
@@ -256,7 +275,7 @@ npm --prefix frontend run build:web
 * **Frontend:** Deployed to **Cloudflare Pages**, serving static HTML/JS bundles globally via edge CDN with automated caching headers and sub-second asset distribution.
 * **Backend:** Deployed as a single multi-stage Docker container on **Render Free Web Service**, executing both the FastAPI gateway (Python) and the transaction service (Java 21) within a shared Linux environment.
 * **Database:** Hosted on **Aiven Cloud MySQL 8** with strict TLS/SSL certificate verification.
-* **AI Subsystem:** Hybrid setup combining zero-cost local BM25F document retrieval with remote Ollama Cloud inference.
+* **AI Subsystem:** Hybrid setup combining in-process BM25F document retrieval with remote Gemini inference.
 
 ---
 

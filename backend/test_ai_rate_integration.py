@@ -89,7 +89,7 @@ class TestAIRateIntegration(unittest.TestCase):
                 "text": "Indicative daily reference-rate snapshots subject to caching.",
             }],
         ):
-            service = RAGService(ollama_client=mock_client, rate_provider=self.mock_provider)
+            service = RAGService(gemini_client=mock_client, rate_provider=self.mock_provider)
             service.answer("What exchange rate does ZettaRemit use?")
 
         call_kwargs = mock_client.chat.call_args.kwargs
@@ -155,7 +155,7 @@ class TestAIRateIntegration(unittest.TestCase):
         mock_client.model = "test-model"
         mock_client.chat.return_value = "The rate is 1 USD = ₹95.27 INR."
 
-        service = RAGService(ollama_client=mock_client, rate_provider=self.mock_provider)
+        service = RAGService(gemini_client=mock_client, rate_provider=self.mock_provider)
         res = service.answer("What is the exchange rate?")
         self.assertEqual(res.answer, "The rate is 1 USD = ₹95.27 INR.")
         self.assertIn("fees_and_rates.md", res.sources)
@@ -171,7 +171,7 @@ class TestAIRateIntegration(unittest.TestCase):
         mock_client.model = "test-model"
         mock_client.chat_stream.return_value = iter(["1 USD = ", "₹95.27 INR"])
 
-        service = RAGService(ollama_client=mock_client, rate_provider=self.mock_provider)
+        service = RAGService(gemini_client=mock_client, rate_provider=self.mock_provider)
         events = list(service.answer_stream("What is the exchange rate?"))
         chunks = [e["content"] for e in events if e.get("type") == "chunk"]
         self.assertEqual("".join(chunks), "1 USD = ₹95.27 INR")

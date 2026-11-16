@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 from typing import Generator, Optional
 from functools import lru_cache
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, Numeric, DateTime, Boolean, ForeignKey, UniqueConstraint
@@ -166,7 +167,23 @@ if production():
     if len(setting("INTERNAL_SERVICE_TOKEN", "").encode()) < 32:
         raise RuntimeError("Internal service authentication is not configured")
 
-app = FastAPI(title="ZettaRemit Simulation API", docs_url=None if production() else "/docs", redoc_url=None if production() else "/redoc")
+@asynccontextmanager
+async def app_lifespan(app):
+    if setting('ENABLE_AI_ASSISTANT', 'false').lower() == 'true':
+        import asyncio
+        from ai.hybrid import get_knowledge_index
+        index = get_knowledge_index()
+        await asyncio.to_thread(index.sync, True)
+        snapshot = index._snapshot
+        import logging
+        logging.getLogger('uvicorn.error').info(
+            'Approved knowledge ready: documents=%d chunks=%d mode=%s',
+            len({chunk['source'] for chunk in snapshot.chunks}), len(snapshot.chunks),
+            'hybrid' if snapshot.vectors else 'bm25')
+    yield
+
+
+app = FastAPI(title="ZettaRemit Simulation API", docs_url=None if production() else "/docs", redoc_url=None if production() else "/redoc", lifespan=app_lifespan)
 
 @app.middleware("http")
 async def secure_response_headers(request, call_next):
@@ -394,17 +411,63 @@ def get_transactions(sender_id: Optional[str] = None,
     sender_id = current_user.user_id
     transactions = db.query(TransactionRecord)\
                      .filter(TransactionRecord.sender_id == sender_id)\
-                     .order_by(TransactionRecord.created_at.desc())\
+                     .order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())\
                      .limit(limit).all()
     return transactions
 
 # --- OPTIONAL AI ASSISTANT ROUTER ---
+def agent_tools_for_user(owner):
+    """Read-only, owner-scoped service methods; each tool owns its DB session."""
+    from ai.agent import AgentTools, transaction_data
+
+    def active(db):
+        user = db.query(User).filter(User.user_id == owner).first()
+        if user is None or not user.is_active:
+            raise unauthorized()
+
+    with SessionLocal() as db:
+        active(db)
+
+    def owned(transaction_id=None):
+        with SessionLocal() as db:
+            active(db)
+            query = db.query(TransactionRecord).filter(TransactionRecord.sender_id == owner)
+            if transaction_id is not None:
+                query = query.filter(TransactionRecord.transaction_id == transaction_id)
+            else:
+                query = query.order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())
+            return transaction_data(query.first())
+
+    def history(limit, offset):
+        with SessionLocal() as db:
+            active(db)
+            # Count before pagination; both reads use the same owner-scoped DB
+            # session. MySQL's normal repeatable-read transaction keeps them on
+            # the same snapshot without locking or changing transaction records.
+            query = db.query(TransactionRecord).filter(TransactionRecord.sender_id == owner)
+            total = query.count()
+            records = query.order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())\
+                           .offset(offset).limit(limit).all()
+            returned = len(records)
+            has_more = offset + returned < total
+            return dict(transactions=[transaction_data(record) for record in records],
+                        total_count=total, returned_count=returned, limit=limit, offset=offset,
+                        has_more=has_more, next_offset=offset + returned if has_more else None,
+                        simulation=True)
+
+    return AgentTools(owner, lookup=owned, latest=lambda: owned(), history=history)
+
+
 # Disabled by default. Only enabled when ENABLE_AI_ASSISTANT is explicitly set to true.
 if setting("ENABLE_AI_ASSISTANT", "false").lower() == "true":
     try:
         from ai.router import ai_router
         app.include_router(ai_router)
+        if setting('ENABLE_AI_AGENT', 'false').lower() == 'true':
+            from ai.agent_router import create_agent_router
+            app.include_router(create_agent_router(agent_tools_for_user, app=app))
     except Exception as exc:
         import logging
-        logging.getLogger("uvicorn.error").error("Failed to register AI assistant router: %s", exc)
+        logging.getLogger("uvicorn.error").error("Failed to register AI assistant router: %s", type(exc).__name__)
+        raise RuntimeError('AI assistant registration failed') from None
 

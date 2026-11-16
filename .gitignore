@@ -54,3 +54,7 @@ backend/daily_remittance_summary.csv
 *.cloud.csv
 *.log
 Microsoft/Windows/PowerShell/ModuleAnalysisCache
+
+# Preserve current generated PowerShell cache protection
+Microsoft/Windows/PowerShell/ModuleAnalysisCache
+*.cloud.csv
