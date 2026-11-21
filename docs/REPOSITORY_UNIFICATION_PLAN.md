@@ -1,5 +1,10 @@
 # Unified ZettaRemit repository migration plan
 
+> Historical planning snapshot. The owner's November 20, 2026 instructions now authorize
+> a local integration branch preserving both histories after backup and review. The earlier
+> prohibition on an unrelated-history merge is superseded for that local reconciliation only.
+> No push, update to main, or deployment is authorized. See [reconciliation evidence](GIT_RECONCILIATION.md).
+
 Prepared 2026-11-16. Canonical destination: **Revanth0701/Zettaremit**, branch `main`.
 Status: source snapshot prepared locally; no commit, push, merge or hosting change authorized.
 This decision supersedes older release documents' proposed private-repository destination.

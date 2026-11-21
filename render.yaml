@@ -1,10 +1,14 @@
+# PROPOSED ONLY: do not import/sync to adopt an existing service without review.
 # REVIEW ONLY: importing this blueprint creates resources; not authorized yet.
 services:
   - type: web
-    name: zettaremit-api
+    name: ZettaRemit-App
+    repo: https://github.com/Revanth0701/Zettaremit
+    branch: main
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     autoDeployTrigger: 'off'
     envVars:

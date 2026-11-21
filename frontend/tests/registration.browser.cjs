@@ -5,7 +5,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || path.resolve(__dirname, '../../.local-backups/browser-verification/node_modules/playwright'));
 const root = path.resolve(__dirname, '../..');
-const origin = 'http://localhost:8081';
+const origin = process.env.UX_TEST_ORIGIN || 'http://localhost:8081';
 const fixture = 'http://127.0.0.1:8011';
 const password = 'Synthetic-original-password';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
