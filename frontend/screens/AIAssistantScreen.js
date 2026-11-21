@@ -16,6 +16,17 @@ import {
 import * as Crypto from 'expo-crypto';
 import api from '../lib/api';
 
+const SOURCE_LABELS = {
+  'about_zettaremit.md': 'About ZettaRemit',
+  'currencies_and_corridors.md': 'Supported currencies',
+  'fees_and_rates.md': 'Fees and reference rates',
+  'kyc_and_accounts.md': 'Accounts and verification',
+  'limits_and_security.md': 'Limits and security',
+  'remittance_education.md': 'Remittance guide',
+  'transfers_and_workflows.md': 'Transfer workflow',
+  'troubleshooting_and_errors.md': 'Troubleshooting'
+};
+
 function AssistantIcon({ size = 16, color = '#93C5FD' }) {
   if (Platform.OS === 'web') {
     return (
@@ -61,7 +72,7 @@ export default function AIAssistantScreen({ navigation }) {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hello! I am the ZettaRemit AI Assistant. I can answer questions about ZettaRemit transfer workflows, 3% fees, exchange rate refresh rules, KYC limits, and general remittance concepts.\n\nHow can I help you today?',
+      text: 'Hi! I can help with your transactions, transfer estimates, fees, and ZettaRemit questions. How can I help?',
       sources: ['about_zettaremit.md']
     }
   ]);
@@ -291,8 +302,8 @@ export default function AIAssistantScreen({ navigation }) {
             <Text style={styles.backButtonText}>&larr; Back</Text>
           </TouchableOpacity>
           <View style={styles.topBarTitleContainer}>
-            <Text style={styles.topBarTitle}>ZettaRemit AI Assistant</Text>
-            <Text style={styles.topBarSubtitle}>{providerSubtitle}</Text>
+            <Text testID="ai_header_title" numberOfLines={1} style={[styles.topBarTitle, !isDesktop && { fontSize: 14 }]}>ZettaRemit AI Assistant</Text>
+            <Text numberOfLines={1} style={[styles.topBarSubtitle, !isDesktop && { fontSize: 10 }]}>{providerSubtitle}</Text>
           </View>
           <TouchableOpacity
             style={styles.clearButton}
@@ -368,6 +379,13 @@ export default function AIAssistantScreen({ navigation }) {
                       {msg.text}
                     </Text>
                   )}
+                  {msg.role === 'assistant' && !!msg.text && !!msg.sources?.length && (
+                    <View style={styles.sourcesContainer} accessibilityLabel="Answer references">
+                      {Array.from(new Set(msg.sources)).filter(source => SOURCE_LABELS[source]).map(source => (
+                        <Text key={source} style={styles.sourcePill}>{SOURCE_LABELS[source]}</Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               </View>
             ))}
@@ -396,9 +414,11 @@ export default function AIAssistantScreen({ navigation }) {
           </ScrollView>
 
           {/* Bottom Question Input Bar */}
+          <Text style={{ color: '#4A5568', fontSize: 13, marginHorizontal: 24, marginTop: 8 }}>Message<Text style={{ color: '#C53030' }}> *</Text></Text>
           <View style={styles.inputContainer}>
             <TextInput
               testID="chat_input"
+              accessibilityLabel="Message" aria-required={true}
               style={[
                 styles.textInput,
                 Platform.OS === 'web' && { outlineStyle: 'none', outline: 'none' },
@@ -464,7 +484,7 @@ export default function AIAssistantScreen({ navigation }) {
           {/* Unobtrusive Simulation Disclosure Footer */}
           <View style={styles.simulationBanner}>
             <Text style={styles.simulationBannerText}>
-              SIMULATION ONLY: ZettaRemit is an educational software simulation and does not move real money or connect to live banking rails.
+              ZettaRemit is a simulated remittance application. No real funds are moved.
             </Text>
           </View>
         </View>
@@ -501,7 +521,10 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
   topBarTitleContainer: {
-    alignItems: 'center'
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 8
   },
   topBarTitle: {
     color: '#FFFFFF',
@@ -668,10 +691,18 @@ const styles = StyleSheet.create({
     marginLeft: 6
   },
   sourcesContainer: {
-    display: 'none'
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10
   },
   sourcePill: {
-    display: 'none'
+    fontSize: 11,
+    color: '#475569',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4
   },
   loadingBubble: {
     flexDirection: 'column',

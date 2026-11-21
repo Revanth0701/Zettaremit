@@ -135,14 +135,15 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(result.json()['transaction']['transaction_id'],'synthetic-existing')
         fake.rollback.assert_called_once()
 
-    def test_registration_is_generic_and_validates_password(self):
+    def test_registration_conflict_and_password_validation(self):
         invalid={'full_name':'Synthetic','email':'synthetic@example.com','password':'short'}
         self.assertEqual(self.client.post('/users/register',json=invalid).status_code,422)
         valid=dict(invalid,password='long-synthetic-password')
         first=self.client.post('/users/register',json=valid)
         duplicate=self.client.post('/users/register',json=valid)
-        self.assertEqual(first.status_code,201);self.assertEqual(first.json(),duplicate.json())
-        self.assertEqual(set(first.json()),{'message'})
+        self.assertEqual(first.status_code,201);self.assertEqual(duplicate.status_code,409)
+        self.assertEqual(first.json()['status'],'created')
+        self.assertEqual(set(first.json()),{'status','message'})
 
     def test_internal_rejects_tampered_result_and_network_errors(self):
         import internal_service

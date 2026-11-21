@@ -1,0 +1,1088 @@
+{
+  "prepared_date": "2026-11-16",
+  "canonical_repository": "Revanth0701/Zettaremit",
+  "public_base_commit": "2a6f4af917a71c0964c70ca191fbd7ee75031719",
+  "local_head": "5bbfde9446e0ea825a89f820832cfc74a3cf36a9",
+  "previous_private_main": "87f1f66729f208bf55ad6ceb02f98202923c1ad5",
+  "strategy": "Reviewed source snapshot on a new branch based on public main; no private history import",
+  "candidate_directory": ".local-backups/repository-unification/candidate",
+  "no_git_mutations_performed": true,
+  "files": [
+    {
+      "path": ".dockerignore",
+      "action": "update",
+      "candidate_sha256": "e52a8cc4952135b8949a051f6a7c0fb924f82947b082d91834773ac0f83d8eae",
+      "public_base_sha256": "7752aedd831691245985c2c79248544d4abb012ff2d644149938f1e3fabbfe6c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": ".gitignore",
+      "action": "update",
+      "candidate_sha256": "5f03858513d8a70163318755831657e3d89f8c4ad054de232ac7dbf917e24127",
+      "public_base_sha256": "f07a10ea40e7435bc1cd3c7a7235d8c6ee1c1aabe239b074514aad1590ef9d57",
+      "preserves_current_worktree_bytes": false
+    },
+    {
+      "path": "Dockerfile",
+      "action": "unchanged",
+      "candidate_sha256": "2236dd242cd2363bf835c589e5081e9b2416c1f7f60a7d2d117a3f2790ba4337",
+      "public_base_sha256": "c34d38826cbc9944c34c5a32e5a399368f7397339a97244801b918693c74d687",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "README.md",
+      "action": "update",
+      "candidate_sha256": "9c647d4b6401955552d8bde92dde286c1b17b533b9da3cb6936f54643ca12903",
+      "public_base_sha256": "db0557523918003e72cad14cc9110a9b9a5c443a4e7a58508a77f5503df5b4b7",
+      "preserves_current_worktree_bytes": false
+    },
+    {
+      "path": "backend/.env.example",
+      "action": "update",
+      "candidate_sha256": "cab9f034295615ab9180dd711324b65d039cbe6fcd1226b1c6a3f3f81b746920",
+      "public_base_sha256": "b4c81ca77a195e01a87fd24771327c1da18fe35823b3ab9786ade1b0e27a1df7",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/.gitignore",
+      "action": "unchanged",
+      "candidate_sha256": "de799c9cb4241a059ee84afe32266f0f17d732a32a140256f72e29b26c0207d4",
+      "public_base_sha256": "fbb21d7550252643576500c8c1d5f725e0cf2a45a7883b592e946d954f61547f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/__init__.py",
+      "action": "update",
+      "candidate_sha256": "b0047bcfde3bd23d2f2edc0adc79806f84d5b9dc09a211e265cf9db24fd1600c",
+      "public_base_sha256": "ba8fbd6b9a33b62b9c48e8db88c575c760d2583d67ccc884843609fed3ea17aa",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/agent.py",
+      "action": "add",
+      "candidate_sha256": "8ca03d3d330a0addd29ee8210dd1009c6d85402857c72c93fa09b864192717ef",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/agent_router.py",
+      "action": "add",
+      "candidate_sha256": "eeed49965c44595da9b97315ad94a9b13b0298461bc5e7e45332d6456b42eddf",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/gemini_client.py",
+      "action": "update",
+      "candidate_sha256": "ff164b89ca54fae5d823f2d6e0f84cedb522aaa7ba47eb6229d28c3f8e9d6ea5",
+      "public_base_sha256": "6f3a50978b8f22a92e9e6ce26f57abc769137a1a6db1f09aabe20a5266d8816d",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/hybrid.py",
+      "action": "add",
+      "candidate_sha256": "f275c8de408876c4a7fdd6fbcd75704b162018d7f9505e9aa6e833a97a3a69a8",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/about_zettaremit.md",
+      "action": "unchanged",
+      "candidate_sha256": "46057f6e52d29a8153319fdc9e35bdf4aebc2eb00de494b7848671e3c81362cd",
+      "public_base_sha256": "c0c076ab7a284a29adae7c69cd934d2d75b0a6ca14fd0f31a7edbb358633aab0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/currencies_and_corridors.md",
+      "action": "unchanged",
+      "candidate_sha256": "deea850b9deeba37a1a196e03b26c7f36a06668ba606fbd351ba810aec8f2bdb",
+      "public_base_sha256": "7393b3e70e16c3937aa443616f81a92f1d1b210a3ed384b78b489d5411a62328",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/fees_and_rates.md",
+      "action": "unchanged",
+      "candidate_sha256": "2c137f65c9390ee3198ffcd0f9c0a0e57b2c9a774c961f35c3d2c533000a0098",
+      "public_base_sha256": "d70200d0651d67aa1df2eb566714c6cd566e6e61fe57905e9d203c7354626d35",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/kyc_and_accounts.md",
+      "action": "unchanged",
+      "candidate_sha256": "292b5cbdff659a4f4da6bd56c776962b1f70be2cbe581e49ee9f21c128cb5c5f",
+      "public_base_sha256": "4b86a52bbdc94e45acfdb94fe4b48e82805000583025f4d6c8a176ba70bea8d3",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/limits_and_security.md",
+      "action": "unchanged",
+      "candidate_sha256": "9ab20266c6429283661459655f1d4e771baa898907729816f5158dab239d5cc9",
+      "public_base_sha256": "71cdc1e8391d48dab122b874186b2196fb6200782f8625dcb6410be5c4db7b06",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/remittance_education.md",
+      "action": "unchanged",
+      "candidate_sha256": "a4ce2e84d12ca07637c7d4fca614b7b058df09033aedab639bcf68dfdd6eca61",
+      "public_base_sha256": "5c783a3cb8fc27c7a2697187a3d54459ff32448e1770176520edaaf0c5972dd6",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/transfers_and_workflows.md",
+      "action": "unchanged",
+      "candidate_sha256": "f659ee75564923b086852e4b2435b77a51e7a21c3c9e7754c1aef03862b32d41",
+      "public_base_sha256": "5ca3d93cc6b88a16534760e1d26bf91ee4544b69f1e4b04b7da6887a69774ee8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/knowledge_base/troubleshooting_and_errors.md",
+      "action": "unchanged",
+      "candidate_sha256": "fa96a3e31cd83ee19304b900428d98ac0898b0a032af2807b27d1570d047edcd",
+      "public_base_sha256": "77c9e6ee5758372d7e8effa002af559665300aa5c2b1b4c96f9b349e5c80b990",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/lightweight_retriever.py",
+      "action": "update",
+      "candidate_sha256": "e9eee43b777440bad4593104d02f0d5b2be451a29e2eadece6d7981e8a7b1db7",
+      "public_base_sha256": "12f8d09da7bc08f0729d2a0e99c7e374ad5eb898e73e63f0ae1c9243ae183045",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/markdown_utils.py",
+      "action": "add",
+      "candidate_sha256": "b170134a22fc2afdb6f371c6a97ae37b08e16fac6de2c644faa49eea6c97d75a",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/rag_service.py",
+      "action": "update",
+      "candidate_sha256": "15617aa8cc318b86f165eb6ce1f7f0f26b83c04e19d4669dd62f9744e0da43b9",
+      "public_base_sha256": "ddcc93bdf2407032a9fa654a5a42be81590b0d35aaa6f408775b47384c8e7de0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/ai/router.py",
+      "action": "update",
+      "candidate_sha256": "ed5f20efa758ee096528c00d416ce3953c6383a432959672c6531dfde5266aa9",
+      "public_base_sha256": "93d96cf60314b5791a2a355582cf193123a790caab81394da138fbf2d729fa0e",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/api_responses.py",
+      "action": "unchanged",
+      "candidate_sha256": "92d144463eab71740bb16bdf4e14f32a8623bf0d79f281d29926e1621552b9e1",
+      "public_base_sha256": "cc430d57c6cfd2f514c2892852ac3b5f51064b1faa513c31ae7e231bd359c6c7",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/auth.py",
+      "action": "unchanged",
+      "candidate_sha256": "d32f944f3c19f08a75e7fc18b093b1f2c0f783ef2e2b25b977290dfedd13cb0f",
+      "public_base_sha256": "04515bec226bfb5386c40b26cb3eb7686ab0ee7ba86c26998918c90ed996a42f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/check_cloud_schema.py",
+      "action": "unchanged",
+      "candidate_sha256": "41334d0d377708c10980f66a6b35d9c349bb26c9d153db3f7d7537b3de65c72d",
+      "public_base_sha256": "dc17ef11ebc898181d08c83e94f177cb7814d1899845db65d4ce7b79f1a268b7",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/database_config.py",
+      "action": "unchanged",
+      "candidate_sha256": "35d75ecff328a560917b5b0248984e1f3859ba8c501828e8577824ac0145695c",
+      "public_base_sha256": "7e816eb40afd8e5ff0fd5f20ee35d1a866af85abcc76bfbf95bf951cb6485cd3",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/etl_pipeline.py",
+      "action": "unchanged",
+      "candidate_sha256": "1cc913f4fb9640d2a5d3978d86901a44c421c83c4900c1ce7be91bd34d24e675",
+      "public_base_sha256": "d8c2ace2882e05d1bdd8c25ae4a0d5df42669217c1dc8de991b16db9baa9217c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/exchange_rates.py",
+      "action": "unchanged",
+      "candidate_sha256": "773e0630e3b4606be3af7ab9eb78bbded9e312584e892d12829aabf96a0832e2",
+      "public_base_sha256": "d043165dc2f0978e4c872161232cc6b59b6315563f5c3bd606086a19f01e16ac",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/internal_service.py",
+      "action": "unchanged",
+      "candidate_sha256": "c5198721b96c7af1f1c24fc7ea7dad904ee03d870734c3efc654a0250ec3ff2f",
+      "public_base_sha256": "91c6faff2a726f786d682c47ea0d4a95e2b30f9594d29a4b0d6b86749025f1c6",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/main.py",
+      "action": "update",
+      "candidate_sha256": "a85a290aec937904544680a6cf0d35890373a628d64043abb789a982844a8034",
+      "public_base_sha256": "9803d230f9be1912fd131e51dc4e9a77f4bfbb9cffea64c4af278fec0be6a3ea",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/migrations/20261023_01_review_only.sql",
+      "action": "unchanged",
+      "candidate_sha256": "d861c9a513a66929d75ee35fb0543d10a70d85462930c51cb8ccb3e8c8793a0c",
+      "public_base_sha256": "6e2ff2dc60348399858f7b64cdc3a834e9dc9768f1d096cd912f79abdfc63fb0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/money.py",
+      "action": "unchanged",
+      "candidate_sha256": "54f81df61dcd6b7c4c84e5292c2f59c1ff14d60ab59fc61fa52b850bdc7ece14",
+      "public_base_sha256": "f0bc40571c072d03bdbc6b0841e540c7918d611e1b9da6bc82f2f6a4540a47c9",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/quotes.py",
+      "action": "unchanged",
+      "candidate_sha256": "143838a54dc8bb4f7b7c14a0bf90a46afa796806518004bfb28b6cfd74c8269f",
+      "public_base_sha256": "143838a54dc8bb4f7b7c14a0bf90a46afa796806518004bfb28b6cfd74c8269f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/rate_limit.py",
+      "action": "unchanged",
+      "candidate_sha256": "1b01b63cb0b64ecaa7fb653752a05143139517011f0e715d1b484c9f105e5c0d",
+      "public_base_sha256": "25bebad54a566e44fcd10c9bbb871765a673bd31babb9dde953db81f60d30773",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/requirements-container.lock",
+      "action": "update",
+      "candidate_sha256": "b212a6203844d43cdc39c98eaf7f00df457ef9260eafa9f7140a45accfc4c70a",
+      "public_base_sha256": "0e7575ede5c70bad8ce76e740b14798790a025939ad73ed5875a002c2fdf76e4",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/requirements-dev.txt",
+      "action": "update",
+      "candidate_sha256": "69075054c6d3bf5e0104bbc5d72895f380f050216a76ee8978dc4fbfd62f95e8",
+      "public_base_sha256": "ec78cad85a3a1cba1c8be5e3b599ee79db74b4ed01200a0f3b948ce63cb7145c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/requirements.txt",
+      "action": "unchanged",
+      "candidate_sha256": "2354fbfc8bd12e80e55b77236f2cbdbe6ecbdd64c2cc033bef1a6dbc716e67ac",
+      "public_base_sha256": "b06f899fe4ce2122dfde8f6197036b334cc9c70fa7ab2b6f5a46e07105cbbaff",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/schemas.py",
+      "action": "unchanged",
+      "candidate_sha256": "56bf432c9e720593f218022a78138a62a08726e8de4941c6bac338b7f0fd8afa",
+      "public_base_sha256": "b37db23444d5c4af2071ac449237c9c01793916bde4f2495238d7b3fe02494fd",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/settings.py",
+      "action": "unchanged",
+      "candidate_sha256": "f75ed8ad22a913abe6abf90526f2239f5d9299e21f9675bbe42c057a515c8778",
+      "public_base_sha256": "af1afbf6aed5a40afb8e37460f795d34257b44859c0e91cfc971a52c84512836",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/start.bat",
+      "action": "unchanged",
+      "candidate_sha256": "5f081fd8b225b545d7271ac189d0b927c8b2ce5135e5d91a54ff39ad65cc1c40",
+      "public_base_sha256": "5f081fd8b225b545d7271ac189d0b927c8b2ce5135e5d91a54ff39ad65cc1c40",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_agent_history_offline.py",
+      "action": "add",
+      "candidate_sha256": "b55966c7006f502fb48ee0510c23d01d6c9eacbd1d45b7c74490d04c0d8bbec4",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_ai_bm25_offline.py",
+      "action": "add",
+      "candidate_sha256": "e487e8636734a7d79500f986295c8977d3a2f49729c0f768fe12fd3ffd06486e",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_ai_rate_integration.py",
+      "action": "update",
+      "candidate_sha256": "ab84034e07d2d4b4fec9eca5c910f960c1bb37b0bdb45b704c421f98e40589ee",
+      "public_base_sha256": "a5ece07ddc161013723127206c828e713f9e64cbdce79ebc618beb8d5657f314",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_ai_security_and_calculations_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "5780782739535b185a9d779c938146a70892b16de6b7e4f35215ca2987b31cdd",
+      "public_base_sha256": "4b7fc8dc095b981a31111c9ca02582c94301dee126dac7507f2bcfe5eee2f8a5",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_ai_streaming_offline.py",
+      "action": "update",
+      "candidate_sha256": "f0af5026d91ebad05651edfe9ada299aacf3e3512c422080a8b6392d16266b5b",
+      "public_base_sha256": "c7562efc314cca5826af883c88c5b358ae749c727889d8267e36226d4280b248",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_auth_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "d8da1c9b98395bb45360d108998a59f834f053d8f9b4fc7447bff05a988ca8d2",
+      "public_base_sha256": "35e5286341b9917f45552f29c9f70a6a98254406b371b04328d04219660f9532",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_cloud_connection.py",
+      "action": "unchanged",
+      "candidate_sha256": "d5a70c3538692bae331d18f6ac1a67bbc9d6cba00e26479a3342c31af2f75b9a",
+      "public_base_sha256": "9b15d74c65f05f33e37eb48a214527760658e655ecd5fff8fbb9b12d37c9c3d2",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_config_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "8f0a4496e56152a9e42145ba47cd9b07ab1a6499eef8744502996c57bbf0afcc",
+      "public_base_sha256": "70ccf50ed512db988c26e042688cae4e40e1c86f3b7b3f87fc3b8c996ca5202a",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_exchange_rates_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "f25a55b2394f9d76c6e4296e260744c57b7d2e0b012a68f1f9001d6d086982f0",
+      "public_base_sha256": "f25a55b2394f9d76c6e4296e260744c57b7d2e0b012a68f1f9001d6d086982f0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_gemini_integration_offline.py",
+      "action": "update",
+      "candidate_sha256": "ef8bd9e8b83d1ee065ba7125c10331fa390326b4dd137ac567c203570d61c371",
+      "public_base_sha256": "03fff26c73b19acc784a376069382f3037335494fb366a4377f11c35a07ab04c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_hybrid_agent_offline.py",
+      "action": "add",
+      "candidate_sha256": "9ec4890b90e12c377d116c68d9dec01af5f3c0aac3780b4f47123a58a7df5d58",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_money_rates_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "3fe9b9ecb4a7615901d61d964891bb711f50f19927853ba6c38141e387ea0e7b",
+      "public_base_sha256": "3fe9b9ecb4a7615901d61d964891bb711f50f19927853ba6c38141e387ea0e7b",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_quotes_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "48c72f7d696e53e4f875a6e3847fc8ad60e90c0077fbd5e1413ef425e3fb2842",
+      "public_base_sha256": "48c72f7d696e53e4f875a6e3847fc8ad60e90c0077fbd5e1413ef425e3fb2842",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_schema_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "9668a9fbe44a8f054c6c809280143d24e0b52b52a9569b5953f1c9218bbde567",
+      "public_base_sha256": "4ef7b5c43221eabf5508742d43096414f92911c439046444718d1ffc5fde3853",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_sec_fixes.py",
+      "action": "unchanged",
+      "candidate_sha256": "e83cfd41304a9d7ebacd82b639cdd0b83256b1594121483a16f7c10b306aed7e",
+      "public_base_sha256": "4b3520177da5faa413dad89f413ab42d1a88c02b5ec4068957790ffe976bb2ee",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_supervisor_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "75e4162b6843ff81d200d26c92a3d007acdaf49dcd41b7eba50edf9946c072fd",
+      "public_base_sha256": "206860420f9396cbffb9cad29906652ca744a534302a813187a7a5ad415704ba",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "backend/test_transactions_offline.py",
+      "action": "unchanged",
+      "candidate_sha256": "7b41dc9dd78eb5aaec2832d296c9ad15886c26b51d597b3e4734b701c35bf304",
+      "public_base_sha256": "7f33372b8be47495f33a8f229858481b9eb7bd7a8e3fc8a8cce01fe60b04bf3f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "deployment/.env.example",
+      "action": "update",
+      "candidate_sha256": "9428af681383e58ba891dfafcb03cb60591e087c412af2ae918e29caa5da0376",
+      "public_base_sha256": "063940394d3f2ba5a79b42792efa06bbd633c4f1fa4e23a88ddb914aedf2b38d",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "deployment/run_services.py",
+      "action": "unchanged",
+      "candidate_sha256": "5092b4037f0c95a074def4214f4f7084bf0541e624d7f97b558c8c8b88687d7d",
+      "public_base_sha256": "079a92aba5d7f54f5daf17911d62cd66aae70c513611f2db3b147e839078a962",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/AI_UPGRADE.md",
+      "action": "add",
+      "candidate_sha256": "96fc18e47dc46ac9ffb40bea3c5b6a1016f2e81cf7ec3597d295a97be7b42420",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/LOCAL_AI_TESTING.md",
+      "action": "add",
+      "candidate_sha256": "5faaa1a562419e4063dadf713b5c8d1470797f99b5629216ea0182251c308cd4",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/LOCAL_BROWSER_VERIFICATION.md",
+      "action": "add",
+      "candidate_sha256": "5a0685415828442428f4ae88fe1a07915c6c429c8bef32b1bef38065e3106ed4",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/PRODUCTION_DEPLOYMENT_READINESS.md",
+      "action": "add",
+      "candidate_sha256": "5e29e0d1c9886d2a91058c273cabb720782a7b3811e9247b4b9adec33a6ac394",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/PRODUCTION_RELEASE_MANIFEST.json",
+      "action": "add",
+      "candidate_sha256": "561e25781aaf64fb3bce079d190ce460eb4df17a1f11f2484d1d1ddd31f07ad7",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/PRODUCTION_ROLLBACK_PLAN.md",
+      "action": "add",
+      "candidate_sha256": "0b470ba97fe3af8690ed01beed27643d8c45b21f364da7b12284c656f2181092",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/RELEASE.md",
+      "action": "update",
+      "candidate_sha256": "894fe1c997821c408cfd0a7f7efd545b426e6becab22e8823b8909578d3b4a2e",
+      "public_base_sha256": "357825be3be12cf94cae6851ae546c8d44a87eca6d4619052c559b4e7f7f47d8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/REPOSITORY_UNIFICATION_PLAN.md",
+      "action": "add",
+      "candidate_sha256": "854442e17f4d5c00137c38b9eeebeb2b7cb732a6fd668fcc0fabea7c65154602",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/.env.example",
+      "action": "unchanged",
+      "candidate_sha256": "c91aa27829205a7c7c23cdc3679c6b94ed0a9f06b30004f95886e59b26d5358a",
+      "public_base_sha256": "b92488e4b37c8fe005f67e20dc7ca9e34db745d1e1503616d000970f872525c6",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/.gitignore",
+      "action": "unchanged",
+      "candidate_sha256": "ff64096a5a492ab762a690646b2b4f5541ce972aa7c2e2ee98a6b06c7ddcd2c8",
+      "public_base_sha256": "ff64096a5a492ab762a690646b2b4f5541ce972aa7c2e2ee98a6b06c7ddcd2c8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/AGENTS.md",
+      "action": "unchanged",
+      "candidate_sha256": "e61ba8472c3ba17262d89f9dab6182d1643e908c0584ad527c060504b9d446eb",
+      "public_base_sha256": "e61ba8472c3ba17262d89f9dab6182d1643e908c0584ad527c060504b9d446eb",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/App.js",
+      "action": "unchanged",
+      "candidate_sha256": "2faed3de3d0298d0ce997bb0fbb55a69b4228c5bcee26736cd232a93a083971a",
+      "public_base_sha256": "2faed3de3d0298d0ce997bb0fbb55a69b4228c5bcee26736cd232a93a083971a",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/app.json",
+      "action": "unchanged",
+      "candidate_sha256": "50e0590f7b805a55f13501bc6196f36aa3aad6c710193a61a94117cd579021f0",
+      "public_base_sha256": "10d1848e108c54d3aebab7d87b7571929efbf4bf698cda3eeb26fd3eb7f31a6f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/adaptive-icon.png",
+      "action": "unchanged",
+      "candidate_sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+      "public_base_sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/coin-logo.png",
+      "action": "unchanged",
+      "candidate_sha256": "1e496068224b8da94ffa45c921bc1b12dd794890333837ffadaaf29739955205",
+      "public_base_sha256": "1e496068224b8da94ffa45c921bc1b12dd794890333837ffadaaf29739955205",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/favicon.png",
+      "action": "unchanged",
+      "candidate_sha256": "24272cdaeff82cc5facdaccd982a6f05b60c4504704bbf94c19a6388659880bb",
+      "public_base_sha256": "24272cdaeff82cc5facdaccd982a6f05b60c4504704bbf94c19a6388659880bb",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/icon.png",
+      "action": "unchanged",
+      "candidate_sha256": "74c64047eb557b1341bba7a2831eedde9ddb705e6451a9ad9f5552bf558f13de",
+      "public_base_sha256": "74c64047eb557b1341bba7a2831eedde9ddb705e6451a9ad9f5552bf558f13de",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/logo.png",
+      "action": "unchanged",
+      "candidate_sha256": "78073509e55d68920b31bbd4174b95c63381aa7567099911c041d9c709c162cb",
+      "public_base_sha256": "78073509e55d68920b31bbd4174b95c63381aa7567099911c041d9c709c162cb",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/logo1.png",
+      "action": "unchanged",
+      "candidate_sha256": "8120a101baf2c7fe5b05acfe9325af7830980cb025edb28709ed7b76fa12f44d",
+      "public_base_sha256": "8120a101baf2c7fe5b05acfe9325af7830980cb025edb28709ed7b76fa12f44d",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/assets/splash-icon.png",
+      "action": "unchanged",
+      "candidate_sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+      "public_base_sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/AboutSection.js",
+      "action": "unchanged",
+      "candidate_sha256": "75e362471ac83333c91721a66829e2ed5f4b25408fc89d984270e3d5632b32b0",
+      "public_base_sha256": "75e362471ac83333c91721a66829e2ed5f4b25408fc89d984270e3d5632b32b0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/CorridorIllustration.js",
+      "action": "unchanged",
+      "candidate_sha256": "a0d8da70557227d6b383e2119a59a166a4272eba0ec3a59a41b1fe36637340fa",
+      "public_base_sha256": "a0d8da70557227d6b383e2119a59a166a4272eba0ec3a59a41b1fe36637340fa",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/HowItWorksSection.js",
+      "action": "unchanged",
+      "candidate_sha256": "5005eb861628c3f37ef86e0fdcafd6502698213a42ed29e4987d8fcb416f8679",
+      "public_base_sha256": "5005eb861628c3f37ef86e0fdcafd6502698213a42ed29e4987d8fcb416f8679",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/RatesAndFeesSection.js",
+      "action": "unchanged",
+      "candidate_sha256": "3e5f54769dc28fe0e790d51f6599840c41243274fefbec29c9b1416e49c4b8c9",
+      "public_base_sha256": "3e5f54769dc28fe0e790d51f6599840c41243274fefbec29c9b1416e49c4b8c9",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/TransferCalculatorPreview.js",
+      "action": "unchanged",
+      "candidate_sha256": "7273bf2c779ebf9e0c042cf0b5c6302c2a7a3b7a1bf77989ce93802922068569",
+      "public_base_sha256": "7273bf2c779ebf9e0c042cf0b5c6302c2a7a3b7a1bf77989ce93802922068569",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/components/ZettaAIPreview.js",
+      "action": "unchanged",
+      "candidate_sha256": "ca418fed8cfa66bc3957ef5b56dbf99d37a49a511b2f82fe3f57f678e7a9612f",
+      "public_base_sha256": "ca418fed8cfa66bc3957ef5b56dbf99d37a49a511b2f82fe3f57f678e7a9612f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/index.js",
+      "action": "unchanged",
+      "candidate_sha256": "5c157f4d44972d9c84415e1e4bda595b3abcd8cf733f8a9cd20935bec3eccc42",
+      "public_base_sha256": "5c157f4d44972d9c84415e1e4bda595b3abcd8cf733f8a9cd20935bec3eccc42",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/aiStream.js",
+      "action": "add",
+      "candidate_sha256": "779cc35e1c2e4a7e4c3305d9113e64c162a1f51caaaa2201839b5c6b7e92e98c",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/api.js",
+      "action": "unchanged",
+      "candidate_sha256": "1119f0246df2f0f1b04378e79e43dc3ffbc80ce5117fb613b965df761620e211",
+      "public_base_sha256": "c7a50beaeab46fc1c2e86d7fdf6be729e878f43df5394a6e28d1e141453d996a",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/client.js",
+      "action": "update",
+      "candidate_sha256": "4eb5a9b6af1724561018d6fe7c8baedb142ceafd6af6035bb1bd05927a09d829",
+      "public_base_sha256": "1ecbe1b666862f352f86fe0c0f073e26c196de06928f28d53763c0f7778a2a27",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/money.js",
+      "action": "unchanged",
+      "candidate_sha256": "6fffa9cd983f0754e5c73dbcfe88c26dcf710247731935985eac5916fddafd88",
+      "public_base_sha256": "ee4d7408eead7ab55cf75141bafe6d95a9c2ad8bd77cd92fb01812c1e6901cca",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/quoteFlow.js",
+      "action": "unchanged",
+      "candidate_sha256": "529f65cfabbabbc0089e5da652ee6b940b122556391a0796e8361b34987deaae",
+      "public_base_sha256": "529f65cfabbabbc0089e5da652ee6b940b122556391a0796e8361b34987deaae",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/lib/readiness.js",
+      "action": "unchanged",
+      "candidate_sha256": "b73ad2bc164e7ba189127a562cdf608158def01f32293f32f78d3f7160d64d4a",
+      "public_base_sha256": "b73ad2bc164e7ba189127a562cdf608158def01f32293f32f78d3f7160d64d4a",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "action": "update",
+      "candidate_sha256": "61341a3e8a82964a1df93c133054c09e416fd94c04da4f81fe085a38bbd47f59",
+      "public_base_sha256": "3b28a79701acd0321de577a6e1760ab9a539ef62294ad845e79fbe1cbc6c5b54",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/package.json",
+      "action": "unchanged",
+      "candidate_sha256": "39e73e1d9cfee457b85e15c7058458ddbef30499b0dd81b094c1e8f46f3077ca",
+      "public_base_sha256": "068665e6dcde0bee3c7b2d211b43b4f31b906fb7d844b552524cca80ec4bd6b9",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/preview/index.js",
+      "action": "unchanged",
+      "candidate_sha256": "490485894e2a5232fd50826f6892c0c227fe012b727b3461073ebd2b63d59f24",
+      "public_base_sha256": "e922e16ff5b839a49dce7380474215480e0b920a8fb1bf2a4c57ed4ce3fbe8d2",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/preview/metro.config.js",
+      "action": "unchanged",
+      "candidate_sha256": "6a2c9d678daf8989c3ab4a8dbe8aa3569447faf9d228b402fa6d8273e5860745",
+      "public_base_sha256": "54772ff7744e49fbe26c582083d278b92723bb007c0d450ba561ec808e7b4edb",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/preview/mockApi.js",
+      "action": "unchanged",
+      "candidate_sha256": "d47848f337f307ec6744cf65d8ce613d30a96d855f34688fa95da4c558178344",
+      "public_base_sha256": "2ea1e1200c742e51be8f0f1f93f7d2a3bf0fd1285a014c3419ce8e9296ed81d2",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/preview/package.json",
+      "action": "unchanged",
+      "candidate_sha256": "9b7dac9d492a722b1c1bf520e142bd3a43b1cb7ba3383a4c4ee7029363c11f4a",
+      "public_base_sha256": "11325816f96ab0f05ca2a4bdd9b31df1ff19c4c33dbdc8ad40e5617db0fee5b8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/public/_headers",
+      "action": "unchanged",
+      "candidate_sha256": "2fe9a1e51a33711fb219044925930f78e06813cd5a12cc617891a3f439a7705f",
+      "public_base_sha256": "ea47797eda17f57ed50ee76003f53806f00458d66d8002fd9c32bed4203a7092",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/public/_redirects",
+      "action": "unchanged",
+      "candidate_sha256": "94f76bf42ffc51f446f54963735cab3da50e9db2eb45d4934da61e45c717d599",
+      "public_base_sha256": "6036983e5fc00f0169c9e939b1816ed771eee00e27f2fcc517b819041460b9ef",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/AIAssistantScreen.js",
+      "action": "update",
+      "candidate_sha256": "23bb9c447923bb4200aac5eec6b20a647b1fc628539570eac4f19f753368bf18",
+      "public_base_sha256": "f1650ca7df6637cbfe576432f75c5c7b907e331e19c5eaf9c853d4064da63b87",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/AboutScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "86b8f90c1409434580805d4c3958be7f5a37aed7bd3781650f3c0457fe0bfccf",
+      "public_base_sha256": "86b8f90c1409434580805d4c3958be7f5a37aed7bd3781650f3c0457fe0bfccf",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/DashboardScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "a5eba29da7929a45dc6b5442c1228e686207d99ce6310b94a404dafc79e463b9",
+      "public_base_sha256": "096f8b1746d6d49a4d868fa31e6ecdefc01ae6e0eb989fc909fac2f6974c74dd",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/HomeScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "9df1fcb1b217094b3c1cb79d13f38d3e524a3c728b8abe39aadf8ec7b4b8a0df",
+      "public_base_sha256": "9df1fcb1b217094b3c1cb79d13f38d3e524a3c728b8abe39aadf8ec7b4b8a0df",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/HowItWorksScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "f059c0b5f62ad439443e0251d5e4dfd14d2be40cc70055c12e00793bc69587a8",
+      "public_base_sha256": "f059c0b5f62ad439443e0251d5e4dfd14d2be40cc70055c12e00793bc69587a8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/LoginScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "346847c026b23e816a26f8c1e4dc5fa1e09d6c9b477de2e9c921056ec253b753",
+      "public_base_sha256": "346847c026b23e816a26f8c1e4dc5fa1e09d6c9b477de2e9c921056ec253b753",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/RatesAndFeesScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "2a11a6d3120f8969346621b342c6ad59346f8723d70e57a64d127d42b4ba54e7",
+      "public_base_sha256": "2a11a6d3120f8969346621b342c6ad59346f8723d70e57a64d127d42b4ba54e7",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/RegistrationWizard.js",
+      "action": "unchanged",
+      "candidate_sha256": "d1bc1de75e8d699b574abf560f94837c0a70c70aa97ff9c06077aba37d242174",
+      "public_base_sha256": "915b08e9f308c7808215c5d28b80c0a5f69ebbd61a601448aaa7da642a4f926b",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/SplashScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "7c60adc52459eaececbf5ef6d6b4b06cb64b1bca2cbd9ec73f01dbe4d0ca5fb1",
+      "public_base_sha256": "7c60adc52459eaececbf5ef6d6b4b06cb64b1bca2cbd9ec73f01dbe4d0ca5fb1",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/screens/WelcomeScreen.js",
+      "action": "unchanged",
+      "candidate_sha256": "c81c68b64bf687ada4c32f259112807f841a6f2393f8838636265d7148cb56d9",
+      "public_base_sha256": "82a2adf19a47757994e4ee9a339b996b7f1ba4e1d578a3e82dc4c3663876cc24",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/ai_assistant.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "655361e7c6446bdc3d944ca8e79535471074d786c3cd7b3fd643ea6f147e67f7",
+      "public_base_sha256": "792da566cf6ad4577081790c61ed674df224da4c97c36cdbf802450e8e47b728",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/ai_stream.test.cjs",
+      "action": "add",
+      "candidate_sha256": "945b11fd19304d84e27775b0c518155c2aef12c45f50c138473f3334ad3eca8a",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/client.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "1318b6a3de6a1de97b8148f8db39d518f9bb0c8302f5386b57aaa09c2586e4c4",
+      "public_base_sha256": "e3ba2f9baa1d25666e0ad1535a4556e0f8ec79376285582f537a8aeb28b19ec1",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/customer_journey_fixes.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "647ecfc45f3ef769df598469305c821605cce949833d42dc5aa2f2f20bce6b32",
+      "public_base_sha256": "f00573c40ba0b1e7685e991a3e9c1c56bf9442cae535d706ee770b92dd4e5a82",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/dashboard.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "8b739458a28ad13ad0fa802e677eb5e389b147debd086c8e157b7124b652eb7b",
+      "public_base_sha256": "44ec78a94a1f694ce82082f41fdde5e2ade7ea7ca523cf60cbf910480be336a8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/improvements.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "97b134a10ee38aa780d1ad4a26733ea0ddb12c71af7248e1f2e5119334634b23",
+      "public_base_sha256": "97b134a10ee38aa780d1ad4a26733ea0ddb12c71af7248e1f2e5119334634b23",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/login_cold_start.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "8def7f0f2846981205547559c2bac8fb386a79eeeee73428779358e09b052598",
+      "public_base_sha256": "8def7f0f2846981205547559c2bac8fb386a79eeeee73428779358e09b052598",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/previewIsolation.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "694a14351b045bc25ee37f78c1379b17146959c0a73c366c78fafa81e4af1cf9",
+      "public_base_sha256": "694a14351b045bc25ee37f78c1379b17146959c0a73c366c78fafa81e4af1cf9",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/public_website.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "87b378e8ce61fde52b96482a5ff163772e50c7bd985c4e1ec2a6f8585df02c87",
+      "public_base_sha256": "87b378e8ce61fde52b96482a5ff163772e50c7bd985c4e1ec2a6f8585df02c87",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/quoteFlow.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "9a0d5c9bc5a7728ff1125d3d78854fe4f93d05895f8c796f902d526f3d164262",
+      "public_base_sha256": "9a0d5c9bc5a7728ff1125d3d78854fe4f93d05895f8c796f902d526f3d164262",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "frontend/tests/sec_fixes.test.cjs",
+      "action": "unchanged",
+      "candidate_sha256": "d93d5d970d65e019af8cb45563b39dec3b57bc29a1db3f1ad8dc8958592484df",
+      "public_base_sha256": "f6db328c28f0721e6d95ce3edd17ae50d7d313c90b44a15de7d81de48e5e9913",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "render.yaml",
+      "action": "update",
+      "candidate_sha256": "074dd8848f06ed176a19bd5d813dfb84dc1c530ecc449f84ff14af9e469dc857",
+      "public_base_sha256": "4f33281cab3bc22746a8b0e6ad82249a612576f0d61ea89866c95c969d3f21b6",
+      "preserves_current_worktree_bytes": false
+    },
+    {
+      "path": "services/transaction-service/build.gradle",
+      "action": "unchanged",
+      "candidate_sha256": "c1da75eac779eb670dc3d7816ef6a5519ab35e02fc0ec23db6c9d8255b2ec3ab",
+      "public_base_sha256": "4dac049f888e7d6ad14242f60a3a54d46a66ce4c0624e050de661c447ff09144",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/gradle/wrapper/gradle-wrapper.jar",
+      "action": "unchanged",
+      "candidate_sha256": "cb0da6751c2b753a16ac168bb354870ebb1e162e9083f116729cec9c781156b8",
+      "public_base_sha256": "cb0da6751c2b753a16ac168bb354870ebb1e162e9083f116729cec9c781156b8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/gradle/wrapper/gradle-wrapper.properties",
+      "action": "unchanged",
+      "candidate_sha256": "05e7bec397ce5a52628d31dcc4c8b636cbdc55e28f8cef19d097c71b5c5fbb42",
+      "public_base_sha256": "05e7bec397ce5a52628d31dcc4c8b636cbdc55e28f8cef19d097c71b5c5fbb42",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/gradlew",
+      "action": "unchanged",
+      "candidate_sha256": "d8231d345ab33433ab7b2c0720d5beb416c8d5c6789dbc01ad122b63bc2cae0d",
+      "public_base_sha256": "d8231d345ab33433ab7b2c0720d5beb416c8d5c6789dbc01ad122b63bc2cae0d",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/gradlew.bat",
+      "action": "unchanged",
+      "candidate_sha256": "bdecf875b6868cbcbd36a1f85eedf0832f358ff28092c5797ed645f7edce77d9",
+      "public_base_sha256": "95e8ae8e8a256a2f066cdd745d56f7a3fc87aa058a2e4beb483300db7171bd1f",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/TransactionServiceApplication.java",
+      "action": "unchanged",
+      "candidate_sha256": "44108f0d59d3a3d79699c32bb96b1fb0fd32463ad276605b71980bdf9247ae28",
+      "public_base_sha256": "9b40db1fef2534367cb81a5db006cf24559be72e72c064a6d2c171a64acdffb8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/controller/SafeErrors.java",
+      "action": "unchanged",
+      "candidate_sha256": "86bbf4fdb66275840365696c9b1caf19474f78d64082424812fd9d071a7ecd93",
+      "public_base_sha256": "3dadb4f3b40fae13e8b2a25512e5842ecfe8976534a5522f565708a55cc11fa2",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/controller/TransactionController.java",
+      "action": "unchanged",
+      "candidate_sha256": "02d12f8f6a75ceeee9ce0a8377de9f889d0d16bdb7b477c8a3f9dd2df574fb41",
+      "public_base_sha256": "f9fcc2dce8a40771351edcece69869e90a6ef1e6ae4fab098b2b8bcc96fd37d0",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/model/Transaction.java",
+      "action": "unchanged",
+      "candidate_sha256": "e828520ab1820c3fb617967e43b62abafcb04e3b1762ec9245b1b2b0792c7235",
+      "public_base_sha256": "8178a0ddbddca4b65044143d9a01a0d3d912ca0fbaf5af5b4e674c36e96d7db1",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/repository/TransactionRepository.java",
+      "action": "unchanged",
+      "candidate_sha256": "da6a7e71b9fdbcad5d68cf673414a3962c2dbe061d852d9c0f8ca5678ff6b27b",
+      "public_base_sha256": "50f9cbbd4c1532d76f8d5057b3d932fd5e15dca505d36da7b1fe0738351e7aa3",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/java/com/zettaremit/transaction/security/InternalAuthenticationFilter.java",
+      "action": "unchanged",
+      "candidate_sha256": "36447deac36c5900c2478dde1811a0b7a16a4310722a5bca98dc37b3c0eb4200",
+      "public_base_sha256": "6a45d8a74ed1a0b4f3d1068446e0172000fa7f6008c726f5c14fb1f4311d8d27",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/main/resources/application.properties",
+      "action": "unchanged",
+      "candidate_sha256": "010b5c6e690d72016061a540f61c297df4fef97e5f40294ed33fe169c193fbf1",
+      "public_base_sha256": "49a71d03ee581f40a017b964bd9731dfd34aa0df4e167edf5980249c334b5c19",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/test/groovy/com/zettaremit/transaction/TransactionServiceSpec.groovy",
+      "action": "unchanged",
+      "candidate_sha256": "b0049e139300fd835b0d62bd89f03f2fccc2e8287a5018a59337fc88aa06f55b",
+      "public_base_sha256": "c659ab1a468c1a3ec95dba90b617bff68b69d46c0651b28cb008310af90f0b7c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/test/java/com/zettaremit/transaction/SnapshotQuoteTest.java",
+      "action": "unchanged",
+      "candidate_sha256": "b127a409053e6ac7dd082ab50f1a8025634b55eb72d4aab3fd3bc472a977c016",
+      "public_base_sha256": "b127a409053e6ac7dd082ab50f1a8025634b55eb72d4aab3fd3bc472a977c016",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "services/transaction-service/src/test/resources/exchange_rate_vectors.json",
+      "action": "unchanged",
+      "candidate_sha256": "b5dd6990657d52fe2e732ef8e08b6be49e0d4d4880616129926e8682b10e5ea8",
+      "public_base_sha256": "b5dd6990657d52fe2e732ef8e08b6be49e0d4d4880616129926e8682b10e5ea8",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/configure_local_secrets.py",
+      "action": "unchanged",
+      "candidate_sha256": "12c10d7c2fceadd49f4389d94e0f7ff006f401da2181e6a20e4732aa96fed99e",
+      "public_base_sha256": "daded16f9833edbcb5400536649fad99d6f36ecc4257707f5e9a72bdf25d691c",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/start_java_local.py",
+      "action": "unchanged",
+      "candidate_sha256": "ac8fc6d7d7816a95f75a3b45d94b1a24861a1f4e28d0546b77ec19bdc5ad0234",
+      "public_base_sha256": "8469aa932fa768f23e3d1f8fdaf5e7bdbe5fd2c5e08c4c1298a82f1a2782b981",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/start_local_demo.py",
+      "action": "add",
+      "candidate_sha256": "1a99fb549d143e97eadac744d597a835914764641e171c451b1bc0d21222cea8",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_ai_offline.py",
+      "action": "add",
+      "candidate_sha256": "8b3e47980b239222a2c86080740b274a2e5548c60a1785033a8f164163deb9ea",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_container_local.py",
+      "action": "unchanged",
+      "candidate_sha256": "014fbe99360995189d2dea733b90dce5a964c972817082f1af6e785acb803509",
+      "public_base_sha256": "5cd80ec6ebe9e6366b15eb668df60d42f0ad3dd2b38b4dcdfdca45587e91b9f7",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_internal_e2e.py",
+      "action": "unchanged",
+      "candidate_sha256": "a6cbbe142e11bd0cb4bdd245abd4fe3127cc81189ade435d84b35ed7b17b0836",
+      "public_base_sha256": "902cf501cd956bb8e3dc987843ac02c3679a377b85bf8521e5ec011c332c8d8b",
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_local_ai_integration.py",
+      "action": "add",
+      "candidate_sha256": "8e55ffdbb5b7710270bbfb8a600d60debc4861e43415a53af588bdb652e017c6",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_local_browser.cjs",
+      "action": "add",
+      "candidate_sha256": "bd8205615644151aab56e5193e58581473c7262be3c4dbc392cfe17f3ce891f7",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "tools/test_release_container.py",
+      "action": "add",
+      "candidate_sha256": "c7fba4e369a34efd4a5640041855d8594e0b41aee6721f0c4408744c6ae837ef",
+      "public_base_sha256": null,
+      "preserves_current_worktree_bytes": true
+    },
+    {
+      "path": "docs/REPOSITORY_UNIFICATION_INVENTORY.json",
+      "action": "add",
+      "candidate_sha256": null,
+      "public_base_sha256": null,
+      "note": "Manifest excludes its own hash."
+    }
+  ],
+  "retirements": [
+    {
+      "path": "backend/ai/index_knowledge.py",
+      "public_base_sha256": "16d4e69241d20022875bd2c66149b0af72986f842ae17321ca63adbbfe20c517",
+      "reason": "Compared legacy provider/indexer/tests replaced by current tested implementation; retained in public Git history."
+    },
+    {
+      "path": "backend/ai/ollama_client.py",
+      "public_base_sha256": "a4939eef611a7dbb250fcdc78d96918723e7b880e435d2cdfef2bc0f83140beb",
+      "reason": "Compared legacy provider/indexer/tests replaced by current tested implementation; retained in public Git history."
+    },
+    {
+      "path": "backend/test_ai_providers_offline.py",
+      "public_base_sha256": "267f87bb29bdebd79721d9e99707bb10898ae54aa6c36fddae47e0d701327dca",
+      "reason": "Compared legacy provider/indexer/tests replaced by current tested implementation; retained in public Git history."
+    }
+  ],
+  "counts": {
+    "add": 22,
+    "update": 21,
+    "unchanged": 105
+  },
+  "excluded": [
+    ".git history",
+    ".vscode/",
+    ".env and .env.local",
+    ".local-backups/",
+    "databases and records",
+    "credentials/certificates",
+    "generated builds/logs/caches",
+    "node_modules/"
+  ],
+  "public_only_content_disposition": "README and stronger ignore rules reconciled; exactly three reviewed obsolete source files proposed for retirement; no unreviewed target-only files omitted.",
+  "blueprint_validation": {
+    "schema": "https://render.com/schema/render.yaml.json",
+    "dialect": "2020-12",
+    "status": "PASS",
+    "format_checks": false,
+    "applied_to_render": false
+  }
+}

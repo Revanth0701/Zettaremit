@@ -1,34 +1,15 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, StatusBar, Image } from 'react-native';
-import api from '../lib/api';
 
-export default function SplashScreen({ navigation }) {
-  
+// App owns session validation and routing. This component only presents the launch screen.
+export default function SplashScreen({ onFinish }) {
   useEffect(() => {
-    let active = true;
-    const timer = setTimeout(async () => {
-      try {
-        const sess = await api.session();
-        if (active) {
-          if (sess && sess.token) {
-            navigation.replace('Dashboard');
-          } else {
-            navigation.replace('Home');
-          }
-        }
-      } catch (_) {
-        if (active) navigation.replace('Home');
-      }
-    }, 2500);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [navigation]);
+    const timer = setTimeout(onFinish, 450);
+    return () => clearTimeout(timer);
+  }, [onFinish]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView testID="launch_splash" style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#003D99" />
       
       <View style={styles.content}>

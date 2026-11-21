@@ -36,11 +36,17 @@ services:
         value: /etc/secrets/aiven-ca.pem
       - key: ENABLE_AI_ASSISTANT
         value: "false"
-      - key: AI_PROVIDER
-        value: ollama_cloud
-      - key: AI_RETRIEVER
-        value: bm25
-      - key: OLLAMA_CLOUD_MODEL
-        value: gemma4:31b
-      - key: OLLAMA_API_KEY
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: GEMINI_API_KEY
         sync: false
+      - key: ENABLE_AI_AGENT
+        value: "false"
+      - key: RAG_EMBEDDING_PROVIDER
+        value: none
+      - key: RAG_BM25_FALLBACK
+        value: "true"
+      - key: RAG_FINAL_CHUNKS
+        value: "3"
+      - key: RAG_SYNC_SECONDS
+        value: "60"

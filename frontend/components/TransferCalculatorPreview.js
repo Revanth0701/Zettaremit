@@ -102,7 +102,7 @@ export default function TransferCalculatorPreview({ onGetStarted }) {
       {/* Input Amount Section */}
       <View style={styles.inputGroup}>
         <View style={styles.labelRow}>
-          <Text style={styles.inputLabel}>You Send (Gross Amount)</Text>
+          <Text style={styles.inputLabel}>You Send (Gross Amount)<Text style={{ color: '#C53030' }}> *</Text></Text>
           <Text style={styles.currencyBadge}>INR (₹)</Text>
         </View>
         <View style={styles.inputWrapper}>
@@ -114,7 +114,7 @@ export default function TransferCalculatorPreview({ onGetStarted }) {
             keyboardType="numeric"
             placeholder="25000"
             placeholderTextColor="#64748B"
-            accessibilityLabel="Send amount in INR"
+            accessibilityLabel="Send amount in INR" aria-required={true}
           />
         </View>
 

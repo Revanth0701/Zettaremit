@@ -24,7 +24,7 @@ if _BACKEND_DIR not in sys.path:
 
 from auth import token_subject, unauthorized
 
-from .rag_service import get_rag_service, RAGResponse
+from .rag_service import get_rag_service, RAGResponse, transaction_history_requested
 
 ai_router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
@@ -125,6 +125,8 @@ class AskResponse(BaseModel):
     latency_seconds: float
     provider: Optional[str] = None
     model: Optional[str] = None
+    drafts: List[dict] = Field(default_factory=list)
+    error: Optional[str] = None
 
 
 @ai_router.post("/ask", response_model=AskResponse)
@@ -138,6 +140,8 @@ async def ask_assistant_endpoint(
     Requires Bearer token authentication. Strictly read-only and simulation-only.
     Does not move funds, modify accounts, or interact with production systems.
     """
+    if getattr(request.app.state, 'agent_ask', None):
+        return await request.app.state.agent_ask(payload, request, credentials)
     # 1. Enforce authentication
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise unauthorized()
@@ -163,6 +167,9 @@ async def ask_assistant_endpoint(
 
     # 4. Privacy Guardrail: Scrub credentials, JWT tokens, and PII before inference
     sanitized_question = scrub_sensitive_input(payload.question)
+
+    if transaction_history_requested(sanitized_question):
+        raise HTTPException(503, "Account transaction lookup is currently unavailable. Please use transaction history for now.")
 
     # 5. Bind conversation session strictly to authenticated user_id
     scoped_session_id = f"{user_id}::{payload.session_id}" if payload.session_id else f"{user_id}::default"
@@ -256,6 +263,8 @@ async def ask_assistant_stream_endpoint(
     Enforces Bearer authentication, per-IP rate limiting, per-user rate limiting,
     PII sanitization, scoped session isolation, and concurrency semaphore.
     """
+    if getattr(request.app.state, 'agent_stream', None):
+        return await request.app.state.agent_stream(payload, request, credentials)
     # 1. Enforce authentication
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise unauthorized()
@@ -281,6 +290,9 @@ async def ask_assistant_stream_endpoint(
 
     # 4. Privacy Guardrail: Scrub credentials, JWT tokens, and PII
     sanitized_question = scrub_sensitive_input(payload.question)
+
+    if transaction_history_requested(sanitized_question):
+        raise HTTPException(503, "Account transaction lookup is currently unavailable. Please use transaction history for now.")
 
     # 5. Bind session strictly to authenticated user_id
     scoped_session_id = f"{user_id}::{payload.session_id}" if payload.session_id else f"{user_id}::default"
@@ -337,11 +349,15 @@ async def ask_assistant_stream_endpoint(
 
 
 @ai_router.get("/health")
-async def ai_health():
+async def ai_health(request: Request):
     """Lightweight health check for AI service.
     
     Safe for unauthenticated polling: never leaks server paths, IPs, or secrets.
     """
+    agent_enabled = callable(getattr(request.app.state, 'agent_ask', None)) and callable(
+        getattr(request.app.state, 'agent_stream', None))
+    capabilities = {"agent_enabled": agent_enabled,
+                    "assistant_mode": "agent" if agent_enabled else "rag_only"}
     try:
         service = get_rag_service()
         health_info = service.gemini.check_health()
@@ -350,7 +366,8 @@ async def ai_health():
             "provider": service.gemini.provider,
             "model": service.gemini.model,
             "model_ready": bool(health_info.get("model_ready", False)),
-            "enabled": True
+            "enabled": True,
+            **capabilities
         }
     except Exception:
         return {
@@ -358,5 +375,6 @@ async def ai_health():
             "provider": "unknown",
             "model": "unknown",
             "model_ready": False,
-            "enabled": True
+            "enabled": True,
+            **capabilities
         }

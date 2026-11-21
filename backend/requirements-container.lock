@@ -1,5 +1,6 @@
 # Python 3.12 Linux container versions validated by the synthetic Docker audit.
 # Regenerate deliberately and rerun container tests when updating dependencies.
+google-genai==2.7.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1

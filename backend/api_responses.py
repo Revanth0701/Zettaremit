@@ -11,6 +11,8 @@ class HealthResponse(BaseModel):
 
 
 class RegistrationResponse(BaseModel):
+    """Returned only after the user and simulated KYC transaction commits."""
+    status: Literal["created"]
     message: str
 
 

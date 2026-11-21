@@ -47,6 +47,33 @@ class GeminiServiceError(GeminiError):
 
 
 class GeminiClient:
+    @staticmethod
+    def failure_diagnostics(error):
+        """Allowlisted provider diagnostics, never raw messages/URLs/prompts."""
+        import re
+        diagnostics = {'category': type(error).__name__}
+        code = getattr(error, 'code', None)
+        if type(code) is int:
+            diagnostics['http_status'] = code
+        status = getattr(error, 'status', None)
+        if isinstance(status, str) and re.fullmatch(r'[A-Z_]{1,64}', status):
+            diagnostics['status'] = status
+        details = getattr(error, 'details', {})
+        if isinstance(details, dict):
+            body = details.get('error', details)
+            for item in (body.get('details') or []) if isinstance(body, dict) else []:
+                if not isinstance(item, dict):
+                    continue
+                for field in ('reason', 'retryDelay'):
+                    value = item.get(field)
+                    if isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,100}', value):
+                        diagnostics[field] = value
+                for violation in item.get('violations') or []:
+                    identifier = violation.get('quotaId') if isinstance(violation, dict) else None
+                    if isinstance(identifier, str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,150}', identifier):
+                        diagnostics.setdefault('quota_ids', []).append(identifier)
+        return diagnostics
+
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         self._api_key = api_key or os.getenv("GEMINI_API_KEY")
         self.client: Optional[genai.Client] = None
@@ -60,7 +87,12 @@ class GeminiClient:
             )
         if self.client is None:
             try:
-                self.client = genai.Client(api_key=self._api_key)
+                timeout = int(os.getenv('GEMINI_REQUEST_TIMEOUT_SECONDS', '30'))
+                if not 1 <= timeout <= 120:
+                    raise ValueError('Invalid Gemini timeout')
+                self.client = genai.Client(api_key=self._api_key,
+                    http_options=types.HttpOptions(timeout=timeout * 1000,
+                        retry_options=types.HttpRetryOptions(attempts=1)))
             except Exception:
                 raise GeminiServiceError(
                     "Gemini service is temporarily unavailable. Please retry shortly."

@@ -194,8 +194,9 @@ function SuccessCheckIcon({ size = 52, color = '#10B981' }) {
   return <Text style={{ color, fontSize: size }}>✓</Text>;
 }
 
-export default function DashboardScreen({ navigation }) {
-  const [appStep, setAppStep] = useState(1);
+export default function DashboardScreen({ navigation, route }) {
+  const [appStep, setAppStep] = useState(route?.params?.page === 7 ? 7 : 1);
+  useEffect(() => { navigation.setParams?.({ page: appStep === 7 ? 7 : 1 }); }, [appStep, navigation]);
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= 768; 
 
@@ -461,6 +462,7 @@ export default function DashboardScreen({ navigation }) {
 
   const alerts = (
     <View>
+      <Text style={{ color: '#64748B', fontSize: 12, padding: 12 }}>ZettaRemit is a simulated remittance application. No real funds are moved.</Text>
       {!!(error || quoteState.error) && (
         <View style={extraStyles.errorBanner} accessibilityRole="alert">
           <Text style={extraStyles.errorBannerText}>&#9888; {error || quoteState.error}</Text>
@@ -479,7 +481,7 @@ export default function DashboardScreen({ navigation }) {
       {receipt && (
         <View style={extraStyles.receiptBanner}>
           <Text style={extraStyles.receiptBannerText}>
-            Transfer Initiated: {receipt.recipient_amount} {receipt.target_currency} (Simulation mode; no live funds moved).
+            Simulated transfer recorded: {receipt.recipient_amount} {receipt.target_currency} (no funds moved).
           </Text>
         </View>
       )}
@@ -674,10 +676,14 @@ export default function DashboardScreen({ navigation }) {
                         <TouchableOpacity onPress={() => setAppStep(1)}><Text style={styles.backArrow}>&lt;</Text></TouchableOpacity>
                         <Text style={styles.wizardTitle}>Receiver Information</Text>
                       </View>
-                      <TextInput style={styles.inputBox} placeholder="Recipient Legal Name" placeholderTextColor="#A0AEC0" value={recipient} onChangeText={handleRecipientChange} />
-                      <TextInput style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" value={account} onChangeText={setAccount} />
-                      <TextInput style={styles.inputBox} placeholder="Routing Number (ACH / ABA)" placeholderTextColor="#A0AEC0" value={routing} onChangeText={setRouting} />
-                      <TextInput style={styles.inputBox} placeholder="SWIFT Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={swift} onChangeText={setSwift} />
+                      <Text style={styles.inputLabel}>Recipient Legal Name <Text style={{ color: '#C53030' }}> *</Text></Text>
+                      <TextInput accessibilityLabel="Recipient Legal Name" aria-required={true} style={styles.inputBox} placeholder="Recipient Legal Name" placeholderTextColor="#A0AEC0" value={recipient} onChangeText={handleRecipientChange} />
+                      <Text style={styles.inputLabel}>Account Number (optional)</Text>
+                      <TextInput accessibilityLabel="Account Number" aria-required={false} style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" value={account} onChangeText={setAccount} />
+                      <Text style={styles.inputLabel}>Routing Number (ACH / ABA) (optional)</Text>
+                      <TextInput accessibilityLabel="Routing Number (ACH / ABA)" aria-required={false} style={styles.inputBox} placeholder="Routing Number (ACH / ABA)" placeholderTextColor="#A0AEC0" value={routing} onChangeText={setRouting} />
+                      <Text style={styles.inputLabel}>SWIFT Code (optional)</Text>
+                      <TextInput accessibilityLabel="SWIFT Code" aria-required={false} style={styles.inputBox} placeholder="SWIFT Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={swift} onChangeText={setSwift} />
                       <TouchableOpacity style={styles.primaryButton} onPress={() => setAppStep(3)}><Text style={styles.primaryButtonText}>Save recipient and proceed</Text></TouchableOpacity>
                     </View>
                   )}
@@ -689,9 +695,9 @@ export default function DashboardScreen({ navigation }) {
                         <Text style={styles.wizardTitle}>Send Money to USA</Text>
                       </View>
                       {quoteBanner}
-                      <Text style={styles.inputLabel}>You'll be sending (INR)</Text>
+                      <Text style={styles.inputLabel}>You'll be sending (INR)<Text style={{ color: '#C53030' }}> *</Text></Text>
                       <View style={styles.currencyInputRow}>
-                        <TextInput style={styles.currencyInput} value={sendAmountInr} onChangeText={handleAmountChange} keyboardType="numeric" />
+                        <TextInput accessibilityLabel="Send amount in INR" aria-required={true} style={styles.currencyInput} value={sendAmountInr} onChangeText={handleAmountChange} keyboardType="numeric" />
                         <Text style={styles.currencyTag}>INR</Text>
                       </View>
                       <Text style={styles.inputLabel}>Recipient gets (USD)</Text>
@@ -738,8 +744,9 @@ export default function DashboardScreen({ navigation }) {
                         </View>
                         {paymentMethod === 'upi' && (
                           <View style={styles.expandedPaymentArea}>
-                            <TextInput style={styles.inputBox} placeholder="UPI ID (e.g., username@upi)" placeholderTextColor="#A0AEC0" value={upiId} onChangeText={(text) => {setUpiId(text); setIsUpiVerified(false);}} autoCapitalize="none" />
-                            {!isUpiVerified ? (<TouchableOpacity style={styles.verifyButton} onPress={() => setIsUpiVerified(true)}><Text style={styles.verifyButtonText}>Confirm UPI ID (Demo)</Text></TouchableOpacity>) : (<Text style={styles.verifiedText}>UPI ID Confirmed (Simulated)</Text>)}
+                            <Text style={styles.inputLabel}>UPI ID (e.g., username@upi) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                            <TextInput accessibilityLabel="UPI ID (e.g., username@upi)" aria-required={true} style={styles.inputBox} placeholder="UPI ID (e.g., username@upi)" placeholderTextColor="#A0AEC0" value={upiId} onChangeText={(text) => {setUpiId(text); setIsUpiVerified(false);}} autoCapitalize="none" />
+                            {!isUpiVerified ? (<TouchableOpacity style={styles.verifyButton} onPress={() => { if (upiId.trim()) { setIsUpiVerified(true); setError(''); } else setError('Enter a test UPI ID.'); }}><Text style={styles.verifyButtonText}>Confirm test UPI ID</Text></TouchableOpacity>) : (<Text style={styles.verifiedText}>Test UPI ID selected</Text>)}
                           </View>
                         )}
                       </TouchableOpacity>
@@ -766,14 +773,18 @@ export default function DashboardScreen({ navigation }) {
                         <TouchableOpacity onPress={() => setAppStep(4)}><Text style={styles.backArrow}>&lt;</Text></TouchableOpacity>
                         <Text style={styles.wizardTitle}>Enter Indian Bank Details</Text>
                       </View>
-                      <Text style={{ fontSize: 13, color: '#4A5568', textAlign: 'center', marginBottom: 12 }}>Demo Mode: Use fictional test bank details. No real bank accounts are connected or debited.</Text>
+                      <Text style={{ fontSize: 13, color: '#4A5568', textAlign: 'center', marginBottom: 12 }}>Use fictional bank details for this transfer.</Text>
                       {quoteBanner}
-                      <TextInput style={styles.inputBox} placeholder="Fictional Account Holder Name" placeholderTextColor="#A0AEC0" value={indianAccountName} onChangeText={setIndianAccountName} />
-                      <TextInput style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
-                      <TextInput style={styles.inputBox} placeholder="Fictional Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
-                      <TextInput style={styles.inputBox} placeholder="IFSC Code (e.g., SBIN0001234)" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
+                      <Text style={styles.inputLabel}>Fictional Account Holder Name <Text style={{ color: '#C53030' }}> *</Text></Text>
+                      <TextInput accessibilityLabel="Fictional Account Holder Name" aria-required={true} style={styles.inputBox} placeholder="Fictional Account Holder Name" placeholderTextColor="#A0AEC0" value={indianAccountName} onChangeText={setIndianAccountName} />
+                      <Text style={styles.inputLabel}>Bank Name (e.g., SBI, HDFC) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                      <TextInput accessibilityLabel="Bank Name (e.g., SBI, HDFC)" aria-required={true} style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
+                      <Text style={styles.inputLabel}>Fictional Account Number <Text style={{ color: '#C53030' }}> *</Text></Text>
+                      <TextInput accessibilityLabel="Fictional Account Number" aria-required={true} style={styles.inputBox} placeholder="Fictional Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
+                      <Text style={styles.inputLabel}>IFSC Code (e.g., SBIN0001234) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                      <TextInput accessibilityLabel="IFSC Code (e.g., SBIN0001234)" aria-required={true} style={styles.inputBox} placeholder="IFSC Code (e.g., SBIN0001234)" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
                       <Text style={extraStyles.submissionDisclosure}>
-                        Simulation Notice: This transfer is processed in simulation mode. No real money or bank accounts will be debited.
+                        Use fictional payment details. No bank accounts will be debited.
                       </Text>
                       <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleIndianBankSubmit} disabled={!canProceed || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
                         <Text style={styles.primaryButtonText}>Confirm Simulated Transfer (₹ {formatNum(rawInr)})</Text>
@@ -789,7 +800,7 @@ export default function DashboardScreen({ navigation }) {
                         <SuccessCheckIcon size={56} color="#10B981" />
                       </View>
                       <Text style={{fontSize: 22, fontWeight: '700', color: '#1A202C', marginBottom: 10}}>Transfer Submitted</Text>
-                      <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30}}>Your transfer has been successfully initiated in simulation mode. No live funds were moved.</Text>
+                      <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30}}>Your simulated transfer has been recorded. No funds were moved.</Text>
                       <TouchableOpacity style={styles.primaryButton} onPress={resetFlow}><Text style={styles.primaryButtonText}>Go back to home</Text></TouchableOpacity>
                     </View>
                   )}
@@ -1037,10 +1048,14 @@ export default function DashboardScreen({ navigation }) {
                     <TouchableOpacity onPress={() => setAppStep(1)}><Text style={styles.backArrow}>&lt;</Text></TouchableOpacity>
                     <Text style={styles.wizardTitle}>Receiver Information</Text>
                   </View>
-                  <TextInput style={styles.inputBox} placeholder="Recipient Legal Name" placeholderTextColor="#A0AEC0" value={recipient} onChangeText={handleRecipientChange} />
-                  <TextInput style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" keyboardType="number-pad" value={account} onChangeText={setAccount} />
-                  <TextInput style={styles.inputBox} placeholder="Routing Number (ACH / ABA)" placeholderTextColor="#A0AEC0" keyboardType="number-pad" value={routing} onChangeText={setRouting} />
-                  <TextInput style={styles.inputBox} placeholder="SWIFT Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={swift} onChangeText={setSwift} />
+                  <Text style={styles.inputLabel}>Recipient Legal Name <Text style={{ color: '#C53030' }}> *</Text></Text>
+                  <TextInput accessibilityLabel="Recipient Legal Name" aria-required={true} style={styles.inputBox} placeholder="Recipient Legal Name" placeholderTextColor="#A0AEC0" value={recipient} onChangeText={handleRecipientChange} />
+                  <Text style={styles.inputLabel}>Account Number (optional)</Text>
+                  <TextInput accessibilityLabel="Account Number" aria-required={false} style={styles.inputBox} placeholder="Account Number" placeholderTextColor="#A0AEC0" keyboardType="number-pad" value={account} onChangeText={setAccount} />
+                  <Text style={styles.inputLabel}>Routing Number (ACH / ABA) (optional)</Text>
+                  <TextInput accessibilityLabel="Routing Number (ACH / ABA)" aria-required={false} style={styles.inputBox} placeholder="Routing Number (ACH / ABA)" placeholderTextColor="#A0AEC0" keyboardType="number-pad" value={routing} onChangeText={setRouting} />
+                  <Text style={styles.inputLabel}>SWIFT Code (optional)</Text>
+                  <TextInput accessibilityLabel="SWIFT Code" aria-required={false} style={styles.inputBox} placeholder="SWIFT Code" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={swift} onChangeText={setSwift} />
                   <TouchableOpacity style={styles.primaryButton} onPress={() => setAppStep(3)}><Text style={styles.primaryButtonText}>Save recipient and proceed</Text></TouchableOpacity>
                 </View>
               )}
@@ -1052,9 +1067,9 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.wizardTitle}>Send Money to USA</Text>
                   </View>
                   {quoteBanner}
-                  <Text style={styles.inputLabel}>You'll be sending (INR)</Text>
+                  <Text style={styles.inputLabel}>You'll be sending (INR)<Text style={{ color: '#C53030' }}> *</Text></Text>
                   <View style={styles.currencyInputRow}>
-                    <TextInput style={styles.currencyInput} value={sendAmountInr} onChangeText={handleAmountChange} keyboardType="numeric" />
+                    <TextInput accessibilityLabel="Send amount in INR" aria-required={true} style={styles.currencyInput} value={sendAmountInr} onChangeText={handleAmountChange} keyboardType="numeric" />
                     <Text style={styles.currencyTag}>INR ▾</Text>
                   </View>
                   <Text style={styles.inputLabel}>Recipient gets (USD)</Text>
@@ -1102,8 +1117,9 @@ export default function DashboardScreen({ navigation }) {
                     </View>
                     {paymentMethod === 'upi' && (
                       <View style={styles.expandedPaymentArea}>
-                        <TextInput style={styles.inputBox} placeholder="UPI ID (e.g., username@upi)" placeholderTextColor="#A0AEC0" value={upiId} onChangeText={(text) => {setUpiId(text); setIsUpiVerified(false);}} autoCapitalize="none" />
-                        {!isUpiVerified ? (<TouchableOpacity style={styles.verifyButton} onPress={() => setIsUpiVerified(true)}><Text style={styles.verifyButtonText}>Confirm UPI ID (Demo)</Text></TouchableOpacity>) : (<Text style={styles.verifiedText}>UPI ID Confirmed (Simulated)</Text>)}
+                        <Text style={styles.inputLabel}>UPI ID (e.g., username@upi) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                        <TextInput accessibilityLabel="UPI ID (e.g., username@upi)" aria-required={true} style={styles.inputBox} placeholder="UPI ID (e.g., username@upi)" placeholderTextColor="#A0AEC0" value={upiId} onChangeText={(text) => {setUpiId(text); setIsUpiVerified(false);}} autoCapitalize="none" />
+                        {!isUpiVerified ? (<TouchableOpacity style={styles.verifyButton} onPress={() => { if (upiId.trim()) { setIsUpiVerified(true); setError(''); } else setError('Enter a test UPI ID.'); }}><Text style={styles.verifyButtonText}>Confirm test UPI ID</Text></TouchableOpacity>) : (<Text style={styles.verifiedText}>Test UPI ID selected</Text>)}
                       </View>
                     )}
                   </TouchableOpacity>
@@ -1128,14 +1144,18 @@ export default function DashboardScreen({ navigation }) {
                     <TouchableOpacity onPress={() => setAppStep(4)}><Text style={styles.backArrow}>&lt;</Text></TouchableOpacity>
                     <Text style={styles.wizardTitle}>Enter Indian Bank Details</Text>
                   </View>
-                  <Text style={{ fontSize: 13, color: '#4A5568', textAlign: 'center', marginBottom: 12 }}>Demo Mode: Use fictional test bank details. No real bank accounts are connected or debited.</Text>
+                  <Text style={{ fontSize: 13, color: '#4A5568', textAlign: 'center', marginBottom: 12 }}>Use fictional bank details for this transfer.</Text>
                   {quoteBanner}
-                  <TextInput style={styles.inputBox} placeholder="Fictional Account Holder Name" placeholderTextColor="#A0AEC0" value={indianAccountName} onChangeText={setIndianAccountName} />
-                  <TextInput style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
-                  <TextInput style={styles.inputBox} placeholder="Fictional Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
-                  <TextInput style={styles.inputBox} placeholder="IFSC Code (e.g., SBIN0001234)" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
+                  <Text style={styles.inputLabel}>Fictional Account Holder Name <Text style={{ color: '#C53030' }}> *</Text></Text>
+                  <TextInput accessibilityLabel="Fictional Account Holder Name" aria-required={true} style={styles.inputBox} placeholder="Fictional Account Holder Name" placeholderTextColor="#A0AEC0" value={indianAccountName} onChangeText={setIndianAccountName} />
+                  <Text style={styles.inputLabel}>Bank Name (e.g., SBI, HDFC) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                  <TextInput accessibilityLabel="Bank Name (e.g., SBI, HDFC)" aria-required={true} style={styles.inputBox} placeholder="Bank Name (e.g., SBI, HDFC)" placeholderTextColor="#A0AEC0" value={indianBankName} onChangeText={setIndianBankName} />
+                  <Text style={styles.inputLabel}>Fictional Account Number <Text style={{ color: '#C53030' }}> *</Text></Text>
+                  <TextInput accessibilityLabel="Fictional Account Number" aria-required={true} style={styles.inputBox} placeholder="Fictional Account Number" placeholderTextColor="#A0AEC0" value={indianAccount} onChangeText={setIndianAccount} keyboardType="number-pad" />
+                  <Text style={styles.inputLabel}>IFSC Code (e.g., SBIN0001234) <Text style={{ color: '#C53030' }}> *</Text></Text>
+                  <TextInput accessibilityLabel="IFSC Code (e.g., SBIN0001234)" aria-required={true} style={styles.inputBox} placeholder="IFSC Code (e.g., SBIN0001234)" placeholderTextColor="#A0AEC0" autoCapitalize="characters" value={ifscCode} onChangeText={setIfscCode} />
                   <Text style={extraStyles.submissionDisclosure}>
-                    Simulation Notice: This transfer is processed in simulation mode. No real money or bank accounts will be debited.
+                    Use fictional payment details. No bank accounts will be debited.
                   </Text>
                   <TouchableOpacity style={[styles.primaryButton, (!indianAccountName || !indianBankName || !indianAccount || !ifscCode) && styles.buttonDisabled]} onPress={handleIndianBankSubmit} disabled={!canProceed || (!indianAccountName || !indianBankName || !indianAccount || !ifscCode)}>
                     <Text style={styles.primaryButtonText}>Confirm Simulated Transfer (₹ {formatNum(rawInr)})</Text>
@@ -1151,7 +1171,7 @@ export default function DashboardScreen({ navigation }) {
                     <SuccessCheckIcon size={56} color="#10B981" />
                   </View>
                   <Text style={{fontSize: 22, fontWeight: '700', color: '#1A202C', marginBottom: 10}}>Transfer Submitted</Text>
-                  <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30}}>Your transfer has been successfully initiated in simulation mode. No live funds were moved.</Text>
+                  <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30}}>Your simulated transfer has been recorded. No funds were moved.</Text>
                   <TouchableOpacity style={styles.primaryButton} onPress={resetFlow}><Text style={styles.primaryButtonText}>Go back to home</Text></TouchableOpacity>
                 </View>
               )}

@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 from typing import Generator, Optional
 from functools import lru_cache
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, Numeric, DateTime, Boolean, ForeignKey, UniqueConstraint
@@ -166,7 +167,23 @@ if production():
     if len(setting("INTERNAL_SERVICE_TOKEN", "").encode()) < 32:
         raise RuntimeError("Internal service authentication is not configured")
 
-app = FastAPI(title="ZettaRemit Simulation API", docs_url=None if production() else "/docs", redoc_url=None if production() else "/redoc")
+@asynccontextmanager
+async def app_lifespan(app):
+    if setting('ENABLE_AI_ASSISTANT', 'false').lower() == 'true':
+        import asyncio
+        from ai.hybrid import get_knowledge_index
+        index = get_knowledge_index()
+        await asyncio.to_thread(index.sync, True)
+        snapshot = index._snapshot
+        import logging
+        logging.getLogger('uvicorn.error').info(
+            'Approved knowledge ready: documents=%d chunks=%d mode=%s',
+            len({chunk['source'] for chunk in snapshot.chunks}), len(snapshot.chunks),
+            'hybrid' if snapshot.vectors else 'bm25')
+    yield
+
+
+app = FastAPI(title="ZettaRemit Simulation API", docs_url=None if production() else "/docs", redoc_url=None if production() else "/redoc", lifespan=app_lifespan)
 
 @app.middleware("http")
 async def secure_response_headers(request, call_next):
@@ -277,43 +294,63 @@ def health_check():
     return {"status": "success", "message": "ZettaRemit simulation API"}
 
 # --- REGISTER ---
+REGISTRATION_CONFLICT = "This email is already registered. Please sign in or reset your password."
+REGISTRATION_FAILURE = "Unable to create your account right now. Please try again."
+
+
 @app.post("/users/register", status_code=status.HTTP_201_CREATED, response_model=RegistrationResponse)
 def register_user(user: UserCreate, request: Request, db: Session = Depends(get_db)):
     limiter.check(("register", request.client.host if request.client else "unknown"), limit=5)
-    hashed_password = pwd_context.hash(user.password)
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
-        return {"message": "If the supplied details are eligible, a demo account is available. Please sign in."}
-    new_user_id = "USR-" + uuid.uuid4().hex.upper()
 
-    # 1. Save the basic user
-    new_user = User(
-        user_id=new_user_id,
-        full_name=user.full_name,
-        email=user.email,
-        password_hash=hashed_password,
-        phone_number=user.phone_number
-    )
-    db.add(new_user)
-
-    # 2. Save the KYC verification record linked to this user (simulation only)
-    # SEC-02: Never persist raw Aadhaar, PAN, passport, or other government ID numbers.
-    new_verification = UserVerification(
-        verification_id="KYC-" + uuid.uuid4().hex.upper(),
-        user_id=new_user_id,
-        document_type=user.document_type or "SIMULATED",
-        document_number=None,
-        document_status="SIMULATED"
-    )
-    db.add(new_verification)
+    def rollback():
+        try:
+            db.rollback()
+            return True
+        except Exception:
+            # A broken connection must not replace the safe public error with driver details.
+            return False
 
     try:
+        if db.query(User).filter(User.email == user.email).first():
+            raise HTTPException(status_code=409, detail=REGISTRATION_CONFLICT)
+        new_user_id = "USR-" + uuid.uuid4().hex.upper()
+        db.add(User(
+            user_id=new_user_id,
+            full_name=user.full_name,
+            email=user.email,
+            password_hash=pwd_context.hash(user.password),
+            phone_number=user.phone_number,
+        ))
+        # Persist the user and simulated verification atomically; never store a real ID.
+        db.add(UserVerification(
+            verification_id="KYC-" + uuid.uuid4().hex.upper(),
+            user_id=new_user_id,
+            document_type=user.document_type or "SIMULATED",
+            document_number=None,
+            document_status="SIMULATED",
+        ))
         db.commit()
+    except HTTPException:
+        rollback()
+        raise
     except IntegrityError:
-        db.rollback()
-        return {"message": "If the supplied details are eligible, a demo account is available. Please sign in."}
-    db.refresh(new_user)
-    return {"message": "If the supplied details are eligible, a demo account is available. Please sign in."}
+        if rollback():
+            # Confirm an email conflict by querying committed state after rollback.
+            # Do not parse or expose database-specific constraint/error strings.
+            try:
+                existing = db.query(User).filter(User.email == user.email).first()
+            except Exception:
+                rollback()
+                existing = None
+            if existing:
+                raise HTTPException(status_code=409, detail=REGISTRATION_CONFLICT) from None
+        raise HTTPException(status_code=500, detail=REGISTRATION_FAILURE) from None
+    except Exception:
+        rollback()
+        raise HTTPException(status_code=500, detail=REGISTRATION_FAILURE) from None
+
+    # No fallible refresh is needed: the response exposes no generated database fields.
+    return {"status": "created", "message": "Account created. Please sign in."}
 
 # --- LOGIN ---
 @app.post("/users/login", response_model=LoginResponse)
@@ -394,17 +431,63 @@ def get_transactions(sender_id: Optional[str] = None,
     sender_id = current_user.user_id
     transactions = db.query(TransactionRecord)\
                      .filter(TransactionRecord.sender_id == sender_id)\
-                     .order_by(TransactionRecord.created_at.desc())\
+                     .order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())\
                      .limit(limit).all()
     return transactions
 
 # --- OPTIONAL AI ASSISTANT ROUTER ---
+def agent_tools_for_user(owner):
+    """Read-only, owner-scoped service methods; each tool owns its DB session."""
+    from ai.agent import AgentTools, transaction_data
+
+    def active(db):
+        user = db.query(User).filter(User.user_id == owner).first()
+        if user is None or not user.is_active:
+            raise unauthorized()
+
+    with SessionLocal() as db:
+        active(db)
+
+    def owned(transaction_id=None):
+        with SessionLocal() as db:
+            active(db)
+            query = db.query(TransactionRecord).filter(TransactionRecord.sender_id == owner)
+            if transaction_id is not None:
+                query = query.filter(TransactionRecord.transaction_id == transaction_id)
+            else:
+                query = query.order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())
+            return transaction_data(query.first())
+
+    def history(limit, offset):
+        with SessionLocal() as db:
+            active(db)
+            # Count before pagination; both reads use the same owner-scoped DB
+            # session. MySQL's normal repeatable-read transaction keeps them on
+            # the same snapshot without locking or changing transaction records.
+            query = db.query(TransactionRecord).filter(TransactionRecord.sender_id == owner)
+            total = query.count()
+            records = query.order_by(TransactionRecord.created_at.desc(), TransactionRecord.transaction_id.desc())\
+                           .offset(offset).limit(limit).all()
+            returned = len(records)
+            has_more = offset + returned < total
+            return dict(transactions=[transaction_data(record) for record in records],
+                        total_count=total, returned_count=returned, limit=limit, offset=offset,
+                        has_more=has_more, next_offset=offset + returned if has_more else None,
+                        simulation=True)
+
+    return AgentTools(owner, lookup=owned, latest=lambda: owned(), history=history)
+
+
 # Disabled by default. Only enabled when ENABLE_AI_ASSISTANT is explicitly set to true.
 if setting("ENABLE_AI_ASSISTANT", "false").lower() == "true":
     try:
         from ai.router import ai_router
         app.include_router(ai_router)
+        if setting('ENABLE_AI_AGENT', 'false').lower() == 'true':
+            from ai.agent_router import create_agent_router
+            app.include_router(create_agent_router(agent_tools_for_user, app=app))
     except Exception as exc:
         import logging
-        logging.getLogger("uvicorn.error").error("Failed to register AI assistant router: %s", exc)
+        logging.getLogger("uvicorn.error").error("Failed to register AI assistant router: %s", type(exc).__name__)
+        raise RuntimeError('AI assistant registration failed') from None
 

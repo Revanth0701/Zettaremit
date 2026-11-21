@@ -7,7 +7,7 @@ const { createClient } = require('../lib/client');
 
 test('LoginScreen displays "Email Address" and does not reference phone numbers', () => {
   const loginSource = fs.readFileSync(path.join(__dirname, '../screens/LoginScreen.js'), 'utf8');
-  assert.match(loginSource, /<Text style=\{styles\.inputLabel\}>Email Address<\/Text>/);
+  assert.match(loginSource, /<FieldLabel required>Email Address<\/FieldLabel>/);
   assert.doesNotMatch(loginSource, /Email Address\/Phone Number/);
   assert.match(loginSource, /placeholder="Enter your email address"/);
   assert.doesNotMatch(loginSource, /placeholder="Email\/Phone"/);
@@ -23,15 +23,15 @@ test('RegistrationWizard displays "Email Address", "Enter your email address", a
   assert.doesNotMatch(regSource, /Please enter your email or mobile number\./);
   
   // OTP simulation disclosure
-  assert.match(regSource, /OTP Verification \(Simulated\)/);
-  assert.match(regSource, /Simulation mode: No SMS is delivered\./);
+  assert.match(regSource, /Verify your email/);
+  assert.match(regSource, /No email or SMS is sent\./);
   assert.doesNotMatch(regSource, /Enter the 6-digit verification code sent to your mobile number/);
   
   // Identity simulation disclosure
-  assert.match(regSource, /Select document type \(Simulated Demo\)/);
-  assert.match(regSource, /Demo mode: Do not enter real government document numbers\./);
+  assert.match(regSource, /Profile verification is simulated\. No real identity check is performed\./);
+  assert.match(regSource, /No real documents are collected or verified\./);
   assert.match(regSource, /Photo upload \(Optional \/ Disabled in simulation\)/);
-  assert.match(regSource, /Complete Demo Setup/);
+  assert.match(regSource, /Create account/);
   assert.doesNotMatch(regSource, /Submit & Verify/);
 });
 
@@ -49,8 +49,8 @@ test('DashboardScreen displays data-driven exchange rate and account activity wi
   assert.match(dashSource, /No transfers yet\. Start your first transfer to see your activity here\./);
   
   // UPI confirmation label
-  assert.match(dashSource, /Confirm UPI ID \(Demo\)/);
-  assert.match(dashSource, /UPI ID Confirmed \(Simulated\)/);
+  assert.match(dashSource, /Confirm test UPI ID/);
+  assert.match(dashSource, /Test UPI ID selected/);
   assert.doesNotMatch(dashSource, /UPI ID Verified/);
   
   // Bank transfer description
@@ -58,7 +58,7 @@ test('DashboardScreen displays data-driven exchange rate and account activity wi
   assert.doesNotMatch(dashSource, /Direct transfer from linked bank account/);
   
   // Bank details note & button
-  assert.match(dashSource, /Demo Mode: Use fictional test bank details\./);
+  assert.match(dashSource, /Use fictional bank details for this transfer\./);
   assert.match(dashSource, /Confirm Simulated Transfer \(₹ \{formatNum\(rawInr\)\}\)/);
   assert.doesNotMatch(dashSource, /Pay ₹ \{formatNum\(rawInr\)\} Securely/);
 });

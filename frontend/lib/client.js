@@ -1,5 +1,6 @@
 // Platform-independent client; injectable storage and transport for offline tests.
 const { triggerBackgroundWakeup } = require('./readiness');
+const { createAIStreamConsumer } = require('./aiStream');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public direct reference-rate fetch — bypasses Render when it is sleeping.
@@ -200,6 +201,13 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
         signal.removeEventListener('abort', abortListener);
       }
     }
+    if (path === '/users/register' && (response.status === 409 || response.status >= 500)) {
+      const error = new Error(response.status === 409
+        ? 'This email is already registered. Please sign in or reset your password.'
+        : 'Unable to create your account right now. Please try again.');
+      error.status = response.status;
+      throw error;
+    }
     let data;
     try { data = await response.json(); } catch (_) {
       const error = new Error('The service returned an invalid response.'); error.code = 'INVALID_RESPONSE'; throw error;
@@ -230,6 +238,11 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
       const message = (path.startsWith('/ai') && data && typeof data.detail === 'string') ? data.detail : (messages[response.status] || 'The request could not be completed.');
       const error = new Error(message);
       error.status = response.status; throw error;
+    }
+    if (path === '/users/register' && (response.status !== 201 || data?.status !== 'created')) {
+      const error = new Error('Account creation was not confirmed. Please try again.');
+      error.code = 'INVALID_REGISTRATION_RESPONSE';
+      throw error;
     }
     return data;
   }
@@ -397,62 +410,40 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
         throw err;
       }
 
-      let fullText = '';
-      let sources = [];
-      let latency = 0;
-
-      if (response.body && typeof response.body.getReader === 'function') {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        try {
+      const consumer = createAIStreamConsumer({ onChunk, onSources });
+      let reader;
+      try {
+        if (response.body && typeof response.body.getReader === 'function') {
+          reader = response.body.getReader();
+          const decoder = new TextDecoder();
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (trimmed.startsWith('data: ')) {
-                let evt;
-                try {
-                  evt = JSON.parse(trimmed.slice(6));
-                } catch (_) { continue; }
-                if (evt.type === 'start') {
-                  if (evt.sources) {
-                    sources = evt.sources;
-                    if (onSources) onSources(sources);
-                  }
-                } else if (evt.type === 'chunk') {
-                  const chunk = evt.content || '';
-                  fullText += chunk;
-                  if (onChunk) onChunk(chunk, fullText);
-                } else if (evt.type === 'done') {
-                  if (evt.sources) sources = evt.sources;
-                  if (typeof evt.latency_seconds === 'number') latency = evt.latency_seconds;
-                } else if (evt.type === 'error') {
-                  const streamErr = new Error(evt.error || 'AI generation failed. Please retry.');
-                  streamErr.code = 'STREAM_ERROR';
-                  throw streamErr;
-                }
-              }
-            }
+            consumer.push(decoder.decode(value, { stream: true }));
           }
-        } catch (streamErr) {
-          if (onError) onError(streamErr);
-          throw streamErr;
+          consumer.push(decoder.decode());
+        } else {
+          consumer.push(await response.text());
         }
-      } else {
-        const text = await response.text();
-        fullText = text;
-        if (onChunk) onChunk(text, fullText);
+        const result = consumer.finish();
+        if (onDone) onDone(result);
+        return result;
+      } catch (streamErr) {
+        if (reader && typeof reader.cancel === 'function') await reader.cancel().catch(() => {});
+        if (onError) onError(streamErr);
+        throw streamErr;
+      } finally {
+        if (reader && typeof reader.releaseLock === 'function') reader.releaseLock();
       }
-
-      if (onDone) onDone({ answer: fullText, sources, latency_seconds: latency });
-      return { answer: fullText, sources, latency_seconds: latency };
     },
-    session: () => storage.get(),
+    session: async () => {
+      const session = await storage.get();
+      if (!session || !session.token || !Number.isFinite(session.expiresAt) || session.expiresAt <= Date.now()) {
+        if (session) await storage.clear();
+        return null;
+      }
+      return session;
+    },
     async logout() { await storage.clear(); onUnauthorized(); }
   };
 }

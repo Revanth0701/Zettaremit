@@ -12,14 +12,14 @@ test('AIAssistantScreen source code adheres to security and UI contracts', () =>
   // 1. Simulation-only disclaimer banner
   assert.match(
     code,
-    /SIMULATION ONLY.*?ZettaRemit is an educational software simulation and does not move real money/s,
+    /ZettaRemit is a simulated remittance application\. No real funds are moved\./,
     'Must include the simulation-only disclaimer'
   );
 
   // 2. Clear welcome message
   assert.match(
     code,
-    /I am the ZettaRemit AI Assistant/i,
+    /I can help with your transactions, transfer estimates, fees, and ZettaRemit questions/i,
     'Must include welcome message explaining the assistant capabilities'
   );
 

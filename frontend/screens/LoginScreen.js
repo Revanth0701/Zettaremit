@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, Image, ActivityIndicator } from 'react-native';
 // Session handling is centralized and never trusts stored user IDs.
 import api from '../lib/api';
+import { FieldLabel, PasswordField } from '../components/FormFields';
 import { waitForBackendReadiness } from '../lib/readiness';
 
 export default function LoginScreen({ navigation }) {
@@ -29,6 +30,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     if (loading) return;
     setError('');
+    if (!email.trim() || !password) { setError('Enter your email address and password.'); return; }
     setLoading(true);
     setStatusMessage('Connecting to ZettaRemit...');
 
@@ -95,7 +97,7 @@ export default function LoginScreen({ navigation }) {
                   <Image source={require('../assets/logo.png')} style={{ width: 180, height: 60, resizeMode: 'contain', marginBottom: 16 }} />
                   <Text style={styles.desktopTagline}>      ZettaRemit</Text>
                   <Text style={styles.desktopDescription}>
-                  Inflow streaming ledger designed for lightning-fast cross-border clearings and real-time exchange rate matrices.
+                  Explore cross-border transfers with transparent fees and indicative exchange rates.
                   </Text>
                 </View>
               </View>
@@ -105,6 +107,20 @@ export default function LoginScreen({ navigation }) {
             <View style={[styles.formColumn, isDesktop && styles.desktopRightPanel]}>
               <View style={[styles.formCard, isDesktop && styles.desktopFormCardStyle]}>
                 
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => navigation.replace('Welcome')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to Welcome"
+                >
+                  {Platform.OS === 'web' ? (
+                    <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A202C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m12 5-7 7 7 7M5 12h14" />
+                    </svg>
+                  ) : <Text accessible={false} style={styles.backArrow}>{'\u2190'}</Text>}
+                  <Text style={styles.backText}>Back</Text>
+                </TouchableOpacity>
+
                 {/* Mobile-only logo header */}
                 {!isDesktop && <Image source={require('../assets/logo1.png')} style={{ width: 150, height: 50, resizeMode: 'contain', alignSelf: 'center', marginBottom: 32 }} />}
 
@@ -134,10 +150,10 @@ export default function LoginScreen({ navigation }) {
                   </View>
                 )}
 
-                <Text style={styles.inputLabel}>Email Address</Text>
+                <FieldLabel required>Email Address</FieldLabel>
                 <TextInput 
                   style={styles.inputBox} 
-                  placeholder="Enter your email address" 
+                  accessibilityLabel="Email Address" aria-required={true} aria-invalid={!!error} placeholder="Enter your email address"
                   placeholderTextColor="#A0AEC0"
                   value={email}
                   onChangeText={(text) => {
@@ -148,12 +164,10 @@ export default function LoginScreen({ navigation }) {
                   keyboardType="email-address"
                 />
 
-                <Text style={styles.inputLabel}>Password</Text>
-                <TextInput 
+                <PasswordField aria-invalid={!!error}
                   style={styles.inputBox} 
                   placeholder="Password" 
                   placeholderTextColor="#A0AEC0"
-                  secureTextEntry
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -204,6 +218,9 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA' },
+  backButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 4, marginBottom: 16, gap: 8 },
+  backArrow: { color: '#1A202C', fontSize: 22 },
+  backText: { color: '#4A5568', fontSize: 14, fontWeight: '600' },
   scrollWrapper: { flexGrow: 1 },
   layoutWrapper: { flex: 1, justifyContent: 'center' },
   desktopRow: { flexDirection: 'row' },

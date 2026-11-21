@@ -1,5 +1,7 @@
 import api from '../lib/api';
-import React, { useState } from 'react';
+import { FieldLabel, PasswordField, FormIcon } from '../components/FormFields';
+import CountrySelect from '../components/CountrySelect';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, ScrollView, Platform, useWindowDimensions, Image, Alert } from 'react-native';
 
 export default function RegistrationWizard({ navigation }) {
@@ -10,8 +12,12 @@ export default function RegistrationWizard({ navigation }) {
 
   const [emailPhone, setEmailPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [otp, setOtp] = useState('');
+  const [otpDigits, setOtpDigits] = useState(() => Array(6).fill(''));
+  const otp = otpDigits.join('');
+  const otpInputs = useRef([]);
+  const [activeOtpIndex, setActiveOtpIndex] = useState(null);
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
@@ -22,6 +28,48 @@ export default function RegistrationWizard({ navigation }) {
 
   const [kycType, setKycType] = useState('PAN Card');
   const [error, setError] = useState('');
+  const [registrationConflict, setRegistrationConflict] = useState(false);
+
+  function focusOtp(index) {
+    otpInputs.current[index]?.focus();
+  }
+
+  function changeOtp(index, text) {
+    const digits = text.replace(/[^0-9]/g, '');
+    if (text && !digits) return;
+    // Full-code paste/autofill replaces the code even when another box is focused.
+    const start = digits.length === 6 ? 0 : index;
+    setOtpDigits(previous => {
+      const next = [...previous];
+      if (!digits) next[index] = '';
+      else digits.slice(0, 6 - start).split('').forEach((digit, offset) => {
+        next[start + offset] = digit;
+      });
+      return next;
+    });
+    if (digits) focusOtp(Math.min(start + digits.length, 5));
+  }
+
+  function selectOtpDigit(index, event) {
+    const { selection, text = otpDigits[index] } = event.nativeEvent;
+    // A populated box edits one whole digit, even when clicked again while focused.
+    if (text.length !== 1 || (selection.start === 0 && selection.end === 1)) return;
+    const input = otpInputs.current[index];
+    if (Platform.OS === 'web') input?.setSelectionRange(0, 1);
+    else input?.setNativeProps({ selection: { start: 0, end: 1 } });
+  }
+
+  function handleOtpKey(index, event) {
+    const key = event.nativeEvent.key;
+    if (key === 'Backspace' && !otpDigits[index] && index > 0) {
+      event.preventDefault?.();
+      setOtpDigits(previous => previous.map((digit, position) => position === index - 1 ? '' : digit));
+      focusOtp(index - 1);
+    } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      event.preventDefault?.();
+      focusOtp(Math.max(0, Math.min(5, index + (key === 'ArrowLeft' ? -1 : 1))));
+    }
+  }
 
   function showAlert(title, message) {
     Alert.alert(title, message);
@@ -44,8 +92,13 @@ export default function RegistrationWizard({ navigation }) {
         setError("Password is too long. Please use 72 characters or fewer.");
         return;
       }
+      if (password !== confirmPassword) { setError('Passwords do not match. Re-enter your confirm password.'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPhone.trim())) { setError('Enter a valid email address.'); return; }
       setError('');
     }
+
+    if (currentStep === 2 && !/^\d{6}$/.test(otp)) { setError('Enter a 6-digit test code.'); return; }
+    setError('');
 
     if (currentStep === 4) {
       if (!fullName || !fullName.trim()) {
@@ -64,13 +117,15 @@ export default function RegistrationWizard({ navigation }) {
       }
       if (loading) return;
       setLoading(true);
+      setRegistrationConflict(false);
       try {
         await api.register({full_name: fullName.trim(), email: emailPhone.trim().toLowerCase(), password});
         setPassword('');
+        setConfirmPassword('');
         setCurrentStep(8);
       } catch (err) {
-        setError(err.message);
-        showAlert('Registration failed', err.message);
+        setError(err.message || 'Unable to create your account right now. Please try again.');
+        setRegistrationConflict(err.status === 409);
       }
       finally { setLoading(false); }
       return;
@@ -145,6 +200,16 @@ export default function RegistrationWizard({ navigation }) {
 
               <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
                 <View style={styles.formContent}>
+                  {currentStep !== 1 && currentStep !== 4 && !!error && (
+                    <View style={styles.inlineErrorContainer} accessibilityRole="alert">
+                      <Text style={styles.inlineErrorText}>{error}</Text>
+                      {registrationConflict && (
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Sign in to existing account" onPress={() => navigation.navigate('Login')} style={{ paddingVertical: 12, alignItems: 'center' }}>
+                          <Text style={{ color: '#0047AB', fontWeight: '600' }}>Sign in</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
 
                   {currentStep === 1 && (
                     <View>
@@ -157,7 +222,9 @@ export default function RegistrationWizard({ navigation }) {
                         </View>
                       )}
 
+                      <FieldLabel required>Email Address</FieldLabel>
                       <TextInput
+                        accessibilityLabel="Email Address" aria-required={true}
                         style={styles.formInputBox}
                         placeholder="Enter your email address"
                         placeholderTextColor="#A0AEC0"
@@ -170,7 +237,7 @@ export default function RegistrationWizard({ navigation }) {
                         autoCapitalize="none"
                       />
 
-                      <TextInput
+                      <PasswordField aria-invalid={!!error && /password/i.test(error)}
                         style={styles.formInputBox}
                         placeholder="Enter your password"
                         placeholderTextColor="#A0AEC0"
@@ -179,33 +246,47 @@ export default function RegistrationWizard({ navigation }) {
                           setPassword(val);
                           if (error) setError('');
                         }}
-                        secureTextEntry
                       />
+                      <PasswordField aria-invalid={!!error && /password/i.test(error)} label="Confirm Password" style={styles.formInputBox} placeholder="Re-enter your password" value={confirmPassword} onChangeText={value => { setConfirmPassword(value); setError(''); }} />
                     </View>
                   )}
 
                   {currentStep === 2 && (
                     <View>
-                      <Text style={styles.mainTitle}>OTP Verification (Simulated)</Text>
-                      <Text style={styles.subLabelText}>Simulation mode: No SMS is delivered. Enter any 6-digit test code (e.g. 123456) to proceed.</Text>
+                      <Text style={styles.mainTitle}>Verify your email</Text>
+                      <Text style={styles.subLabelText}>No email or SMS is sent. Enter any 6-digit test code to continue.</Text>
 
+                      <FieldLabel required>Test verification code</FieldLabel>
                       <View style={styles.otpGridWrapper}>
-                        <View style={[styles.otpDisplayCell, otp.length === 0 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[0] || ''}</Text></View>
-                        <View style={[styles.otpDisplayCell, otp.length === 1 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[1] || ''}</Text></View>
-                        <View style={[styles.otpDisplayCell, otp.length === 2 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[2] || ''}</Text></View>
-                        <View style={[styles.otpDisplayCell, otp.length === 3 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[3] || ''}</Text></View>
-                        <View style={[styles.otpDisplayCell, otp.length === 4 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[4] || ''}</Text></View>
-                        <View style={[styles.otpDisplayCell, otp.length === 5 && styles.otpDisplayCellActive]}><Text style={styles.otpCellText}>{otp[5] || ''}</Text></View>
+                        {otpDigits.map((digit, index) => (
+                          <TextInput
+                            key={index}
+                            ref={input => { otpInputs.current[index] = input; }}
+                            accessibilityLabel={`Test verification code digit ${index + 1} of 6`}
+                            aria-required={true}
+                            style={[
+                              styles.otpDisplayCell,
+                              styles.otpCellText,
+                              { textAlign: 'center', padding: 0 },
+                              Platform.OS === 'web' && { outlineStyle: 'none' },
+                              activeOtpIndex === index && styles.otpDisplayCellActive,
+                            ]}
+                            keyboardType="number-pad"
+                            inputMode="numeric"
+                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                            autoCorrect={false}
+                            maxLength={6}
+                            selectTextOnFocus
+                            autoFocus={index === 0}
+                            value={digit}
+                            onChangeText={text => changeOtp(index, text)}
+                            onFocus={() => setActiveOtpIndex(index)}
+                            onBlur={() => setActiveOtpIndex(active => active === index ? null : active)}
+                            onKeyPress={event => handleOtpKey(index, event)}
+                            onSelectionChange={event => selectOtpDigit(index, event)}
+                          />
+                        ))}
                       </View>
-
-                      <TextInput
-                        style={styles.hiddenInputOverlay}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                        value={otp}
-                        onChangeText={setOtp}
-                        autoFocus={true}
-                      />
                     </View>
                   )}
 
@@ -213,9 +294,12 @@ export default function RegistrationWizard({ navigation }) {
                     <View>
                       <Text style={styles.mainTitle}>Home address</Text>
                       <Text style={styles.subLabelText}>Please provide your primary residential billing location</Text>
-                      <TextInput style={styles.formInputBox} placeholder="Street Address" placeholderTextColor="#A0AEC0" value={street} onChangeText={setStreet} />
-                      <TextInput style={styles.formInputBox} placeholder="City" placeholderTextColor="#A0AEC0" value={city} onChangeText={setCity} />
-                      <TextInput style={styles.formInputBox} placeholder="Postal Code" placeholderTextColor="#A0AEC0" value={postalCode} onChangeText={setPostalCode} keyboardType="number-pad" />
+                      <FieldLabel>Street Address (optional)</FieldLabel>
+                      <TextInput accessibilityLabel="Street Address" aria-required={false} style={styles.formInputBox} placeholder="Street Address" placeholderTextColor="#A0AEC0" value={street} onChangeText={setStreet} />
+                      <FieldLabel>City (optional)</FieldLabel>
+                      <TextInput accessibilityLabel="City" aria-required={false} style={styles.formInputBox} placeholder="City" placeholderTextColor="#A0AEC0" value={city} onChangeText={setCity} />
+                      <FieldLabel>Postal Code (optional)</FieldLabel>
+                      <TextInput accessibilityLabel="Postal Code" aria-required={false} style={styles.formInputBox} placeholder="Postal Code" placeholderTextColor="#A0AEC0" value={postalCode} onChangeText={setPostalCode} keyboardType="number-pad" />
                     </View>
                   )}
 
@@ -228,9 +312,12 @@ export default function RegistrationWizard({ navigation }) {
                           <Text style={{ color: '#C53030', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{error}</Text>
                         </View>
                       )}
-                      <TextInput style={styles.formInputBox} placeholder="Full Legal Name" placeholderTextColor="#A0AEC0" value={fullName} onChangeText={setFullName} />
-                      <TextInput style={styles.formInputBox} placeholder="Date of Birth (DD/MM/YYYY)" placeholderTextColor="#A0AEC0" value={dob} onChangeText={setDob} />
-                      <TextInput style={styles.formInputBox} placeholder="Nationality" placeholderTextColor="#A0AEC0" value={nationality} onChangeText={setNationality} />
+                      <FieldLabel required>Full Legal Name</FieldLabel>
+                      <TextInput accessibilityLabel="Full Legal Name" aria-required={true} style={styles.formInputBox} placeholder="Full Legal Name" placeholderTextColor="#A0AEC0" value={fullName} onChangeText={setFullName} />
+                      <FieldLabel>Date of Birth (DD/MM/YYYY) (optional)</FieldLabel>
+                      <TextInput accessibilityLabel="Date of Birth (DD/MM/YYYY)" aria-required={false} style={styles.formInputBox} placeholder="Date of Birth (DD/MM/YYYY)" placeholderTextColor="#A0AEC0" value={dob} onChangeText={setDob} />
+                      <FieldLabel>Nationality (optional)</FieldLabel>
+                      <TextInput accessibilityLabel="Nationality" aria-required={false} style={styles.formInputBox} placeholder="Nationality" placeholderTextColor="#A0AEC0" value={nationality} onChangeText={setNationality} />
                     </View>
                   )}
 
@@ -238,35 +325,26 @@ export default function RegistrationWizard({ navigation }) {
                     <View>
                       <Text style={styles.mainTitle}>Country of residence</Text>
                       <Text style={styles.subLabelText}>Select the primary economic country you reside in</Text>
-                      <TextInput style={styles.formInputBox} placeholder="Select Country" placeholderTextColor="#A0AEC0" value={country} onChangeText={setCountry} />
+                      <CountrySelect value={country} onChange={setCountry} />
                     </View>
                   )}
 
                   {currentStep === 6 && (
-                    <View style={styles.alignItemsCenter}>
-                      <Text style={styles.illustrationPlaceholder}>🧑‍💻</Text>
-                      <Text style={styles.mainTitleCenter}>Select document type (Simulated Demo)</Text>
-
+                    <View>
+                      <Text style={styles.mainTitle}>Choose an identity document</Text>
+                      <Text style={styles.subLabelText}>Profile verification is simulated. No real identity check is performed.</Text>
+                      <FieldLabel required>Document type</FieldLabel>
                       <View style={styles.kycOptionsWrapper}>
-                        <TouchableOpacity style={[styles.documentItemRow, kycType === 'PAN Card' && styles.documentItemRowActive]} onPress={() => setKycType('PAN Card')} activeOpacity={0.8}>
-                          <Text style={styles.docItemText}>💳 PAN Card</Text>
-                          <Text style={styles.docStatusDot}>{kycType === 'PAN Card' ? '🟢' : '⚪'}</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.documentItemRow, kycType === 'Aadhar Card' && styles.documentItemRowActive]} onPress={() => setKycType('Aadhar Card')} activeOpacity={0.8}>
-                          <Text style={styles.docItemText}>🏛️ Aadhar Card</Text>
-                          <Text style={styles.docStatusDot}>{kycType === 'Aadhar Card' ? '🟢' : '⚪'}</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.documentItemRow, kycType === 'Passport' && styles.documentItemRowActive]} onPress={() => setKycType('Passport')} activeOpacity={0.8}>
-                          <Text style={styles.docItemText}>🛂 Passport</Text>
-                          <Text style={styles.docStatusDot}>{kycType === 'Passport' ? '🟢' : '⚪'}</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.documentItemRow, kycType === 'Visa' && styles.documentItemRowActive]} onPress={() => setKycType('Visa')} activeOpacity={0.8}>
-                          <Text style={styles.docItemText}>📄 Visa</Text>
-                          <Text style={styles.docStatusDot}>{kycType === 'Visa' ? '🟢' : '⚪'}</Text>
-                        </TouchableOpacity>
+                        {['PAN Card', 'Aadhar Card', 'Passport', 'Visa'].map(document => (
+                          <TouchableOpacity key={document} accessibilityRole="radio" accessibilityLabel={document === 'Aadhar Card' ? 'Aadhaar Card' : document} aria-checked={kycType === document} accessibilityState={{ checked: kycType === document }} style={[styles.documentItemRow, kycType === document && styles.documentItemRowActive]} onPress={() => setKycType(document)}>
+                            <FormIcon />
+                            <View style={{ flex: 1, marginHorizontal: 14 }}>
+                              <Text style={styles.docItemText}>{document === 'Aadhar Card' ? 'Aadhaar Card' : document}</Text>
+                              <Text style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>Use an assigned test identifier</Text>
+                            </View>
+                            <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: kycType === document ? '#0047AB' : '#CBD5E0', alignItems: 'center', justifyContent: 'center' }}>{kycType === document && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#0047AB' }}/>}</View>
+                          </TouchableOpacity>
+                        ))}
                       </View>
                     </View>
                   )}
@@ -274,7 +352,7 @@ export default function RegistrationWizard({ navigation }) {
                   {currentStep === 7 && (
                     <View>
                       <Text style={styles.mainTitle}>{kycType} (Simulation)</Text>
-                      <Text style={styles.subLabelText}>Demo mode: Do not enter real government document numbers. Real identity documents are not collected, verified, or stored in simulation mode.</Text>
+                      <Text style={styles.subLabelText}>Use the assigned test identifier below. No real documents are collected or verified.</Text>
 
                       <View style={[styles.formInputBox, { backgroundColor: '#F8FAFC', justifyContent: 'center', borderColor: '#CBD5E1', paddingVertical: 14 }]}>
                         <Text style={{ color: '#4A5568', fontSize: 14, fontWeight: '600' }}>
@@ -285,8 +363,8 @@ export default function RegistrationWizard({ navigation }) {
                         No government ID numbers are collected or stored.
                       </Text>
 
-                      <TouchableOpacity style={styles.uploadBoxPlaceholder}>
-                        <Text style={styles.uploadBoxIcon}>📤</Text>
+                      <TouchableOpacity disabled accessibilityState={{ disabled: true }} style={styles.uploadBoxPlaceholder}>
+                        <FormIcon />
                         <Text style={styles.uploadBoxText}>Photo upload (Optional / Disabled in simulation)</Text>
                       </TouchableOpacity>
                     </View>
@@ -297,7 +375,7 @@ export default function RegistrationWizard({ navigation }) {
                       <Text style={{fontSize: 70, marginBottom: 24}}>✅</Text>
                       <Text style={{fontSize: 24, fontWeight: '700', color: '#1A202C', marginBottom: 12}}>Account Created</Text>
                       <Text style={{fontSize: 15, color: '#718096', textAlign: 'center', lineHeight: 22}}>
-                        Your profile has been created successfully in simulation mode. You are now ready to explore transfers.
+                        Your account is ready. Sign in to explore transfers.
                       </Text>
                     </View>
                   )}
@@ -309,7 +387,7 @@ export default function RegistrationWizard({ navigation }) {
                     <Text style={styles.primaryActionButtonText}>
                       {
                         currentStep === 6 ? "Select & Continue" :
-                        currentStep === 7 ? "Complete Demo Setup" :
+                        currentStep === 7 ? (error && !registrationConflict ? "Retry registration" : "Create account") :
                         currentStep === 8 ? "Continue to Login" :
                         "Continue"
                       }
@@ -370,7 +448,6 @@ const styles = StyleSheet.create({
   otpDisplayCell: { width: 45, height: 55, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA' },
   otpDisplayCellActive: { borderColor: '#0052CC', borderWidth: 2 },
   otpCellText: { fontSize: 22, fontWeight: '600', color: '#000000' },
-  hiddenInputOverlay: { position: 'absolute', width: '100%', height: 70, opacity: 0 },
   alignItemsCenter: { alignItems: 'center' },
 
   kycOptionsWrapper: { width: '100%', gap: 10 },
