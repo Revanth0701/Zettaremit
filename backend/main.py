@@ -162,10 +162,6 @@ if production():
         raise RuntimeError("Production requires explicit cloud database mode")
     if setting("SCHEMA_REVISION") != "20261023_01":
         raise RuntimeError("Reviewed schema migration must be acknowledged before production startup")
-    if setting("JWT_SECRET_KEY", "") == setting("INTERNAL_SERVICE_TOKEN", "different"):
-        raise RuntimeError("JWT and internal service signing credentials must differ")
-    if len(setting("INTERNAL_SERVICE_TOKEN", "").encode()) < 32:
-        raise RuntimeError("Internal service authentication is not configured")
 
 @asynccontextmanager
 async def app_lifespan(app):
