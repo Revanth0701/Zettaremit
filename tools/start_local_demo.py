@@ -34,14 +34,12 @@ def main():
                           ('RAG_EMBEDDING_PROVIDER','gemini')]:
         if setting(key) != expected:
             raise SystemExit('Local AI configuration is incomplete: '+key)
-    if len(setting('INTERNAL_SERVICE_TOKEN','').encode()) < 32:
-        raise SystemExit('Development internal-service authentication is missing.')
     public = dotenv_values(ROOT/'frontend/.env.local', interpolate=False)
     if public.get('EXPO_PUBLIC_API_URL') != 'http://127.0.0.1:8000':
         raise SystemExit('Refusing to start: frontend local API target must be explicit.')
     if os.environ.get('EXPO_PUBLIC_API_URL', public['EXPO_PUBLIC_API_URL']) != public['EXPO_PUBLIC_API_URL']:
         raise SystemExit('Conflicting frontend process environment.')
-    for port in (8000,8081,8082):
+    for port in (8000,8081):
         with socket.socket() as sock:
             if sock.connect_ex(('127.0.0.1',port)) == 0:
                 raise SystemExit('Port already occupied; inspect the existing process before starting: '+str(port))
@@ -58,7 +56,6 @@ def main():
                     'USERPROFILE','APPDATA','LOCALAPPDATA','HOME','NODE_OPTIONS')}
     frontend_env.update(CI='1', BROWSER='none', EXPO_PUBLIC_API_URL='http://127.0.0.1:8000')
     commands = {
-        'java': ([sys.executable,'-B',str(ROOT/'tools/start_java_local.py')], ROOT, common, 8082, '/health'),
         'backend': ([sys.executable,'-B','-m','uvicorn','main:app','--host','127.0.0.1','--port','8000','--no-access-log'], ROOT/'backend', common, 8000, '/health'),
         'frontend': (['node',str(ROOT/'frontend/node_modules/expo/bin/cli'),'start','--web','--localhost','--port','8081','--clear'], ROOT/'frontend', frontend_env, 8081, '/'),
     }
