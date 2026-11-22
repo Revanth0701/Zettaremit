@@ -9,7 +9,7 @@ from unittest.mock import patch
 from money import amounts, normalize_rate, TransferRequest
 from internal_service import calculate_transfer, ServiceUnavailable
 
-VECTORS = Path(__file__).resolve().parent.parent / "services/transaction-service/src/test/resources/exchange_rate_vectors.json"
+VECTORS = Path(__file__).resolve().parent / "fixtures/exchange_rate_vectors.json"
 KEY = "synthetic-request-0001"
 
 class MoneyRateTests(unittest.TestCase):
