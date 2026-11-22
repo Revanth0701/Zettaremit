@@ -1,0 +1,35 @@
+name: FastAPI consolidation checks
+on:
+  push:
+    branches: [aws-fastapi-consolidation]
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'Dockerfile'
+      - '.github/workflows/fastapi-consolidation.yml'
+  workflow_dispatch:
+
+jobs:
+  backend-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Verify Python quote arithmetic
+        run: python -m unittest -v test_money_rates_offline
+      - name: Verify signed quotes
+        run: python -m unittest -v test_quotes_offline
+      - name: Verify transaction handling
+        run: python -m unittest -v test_transactions_offline
+      - name: Verify database configuration
+        run: python -m unittest -v test_config_offline
