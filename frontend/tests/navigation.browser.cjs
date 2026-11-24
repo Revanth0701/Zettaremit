@@ -50,8 +50,14 @@ const origin = process.env.UX_TEST_ORIGIN || 'http://localhost:8081';
     for (const width of [1280, 390]) {
       const { context, page, api, errors } = await setup(width);
       await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 90000 });
-      await welcome(page);
+      await page.getByText('A simpler way to simulate international money transfers.', { exact: true }).last().waitFor();
       assert.equal(await splashCount(page), 1, 'Fresh launch must show exactly one splash');
+      await page.getByRole('button', { name: 'Get Started', exact: true }).first().click();
+      await welcome(page);
+      await page.getByText('Back to Homepage', { exact: false }).last().click();
+      await page.getByText('A simpler way to simulate international money transfers.', { exact: true }).last().waitFor();
+      await page.getByRole('button', { name: 'Get Started', exact: true }).first().click();
+      await welcome(page);
       await page.getByRole('button', { name: 'Login', exact: true }).click();
       await page.getByRole('button', { name: 'Back to Welcome', exact: true }).focus();
       await page.keyboard.press('Enter'); await welcome(page);
@@ -104,9 +110,16 @@ const origin = process.env.UX_TEST_ORIGIN || 'http://localhost:8081';
       assert.equal(await page.evaluate(() => sessionStorage.getItem('zettaremit-session')), null);
       assert.equal(await splashCount(page), 0);
       assert.deepEqual(api.writes, ['/users/register', '/users/login', '/users/login']);
+      await page.getByRole('button', { name: 'Back to Welcome', exact: true }).click();
+      await welcome(page);
+      await page.getByText('Back to Homepage', { exact: false }).last().click();
+      await page.reload();
+      await page.getByText('A simpler way to simulate international money transfers.', { exact: true }).last().waitFor();
+      assert.equal(await splashCount(page), 0, 'Homepage reload must restore Home without replaying splash');
+      assert.deepEqual(await page.evaluate(() => JSON.parse(sessionStorage.getItem('zettaremit-navigation'))), { name: 'Home' });
       assert.deepEqual(errors, []);
       await context.close();
-      console.log(`PASS ${width}px: fresh splash/Welcome, keyboard Back, signup/login, Dashboard/Transactions/AI refresh, invalid/expired session, logout, no internal splash`);
+      console.log(`PASS ${width}px: fresh splash/Home, Get Started/Welcome, Back to Homepage, homepage reload, keyboard Back, signup/login, Dashboard/Transactions/AI refresh, invalid/expired session, logout, no internal splash`);
     }
     // The app restores a directly opened Login without needing a previous Welcome in its stack.
     {

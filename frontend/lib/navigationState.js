@@ -7,12 +7,12 @@ function safeRoute(route, authenticated) {
   if (route.name === 'Dashboard') return { name: 'Dashboard', params: { page: route.params?.page === 7 ? 7 : 1 } };
   return { name: route.name };
 }
-function readNavigation(storage, authenticated) {
+function readNavigation(storage, authenticated, platform) {
   try {
     const route = safeRoute(JSON.parse(storage?.getItem(KEY)), authenticated);
     if (route) return authenticated && ['Welcome', 'Login'].includes(route.name) ? { name: 'Dashboard' } : route;
   } catch (_) {}
-  return { name: authenticated ? 'Dashboard' : 'Welcome' };
+  return { name: authenticated ? 'Dashboard' : platform === 'web' ? 'Home' : 'Welcome' };
 }
 function saveNavigation(storage, state) {
   const route = safeRoute(state?.routes?.[state.index ?? 0], true);

@@ -19,6 +19,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
       const page = await context.newPage();
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 90000 });
+      await page.getByRole('button', { name: 'Get Started', exact: true }).first().click();
       await page.getByText('Sign-up', { exact: true }).click();
       const email = page.getByLabel('Email Address', { exact: true });
       const password = page.getByLabel('Password', { exact: true });

@@ -57,6 +57,7 @@ async function stopFixture(process) {
           });
           const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
           await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 90000 });
+          await page.getByRole('button', { name: 'Get Started', exact: true }).first().click();
           await page.getByRole('button', { name: 'Sign-up', exact: true }).waitFor();
           return { context, page, control };
         }
