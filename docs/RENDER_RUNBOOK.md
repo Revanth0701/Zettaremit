@@ -1,3 +1,126 @@
+# Current publication authorization - 2026-11-24
+
+The owner explicitly authorized **pushing the reviewed release branch and opening
+its PR with documented backup limitations**, superseding the earlier requirement
+that private provider backups be complete before pushing. This waiver applies only
+to push/PR publication. **Merge, Render restart, provider changes and all deployments
+remain prohibited without separate approval.** Residual dependency risks remain
+accepted for the current prototype, subject to reviewed mitigations.
+
+Pre-push review: fetched canonical main is still 8ada74a. Application commit
+**ec402c726a956a33020caf4873c1b6bc191afe96** has that parent, exactly the 29 reviewed
+changed paths, and its entire 170-file Git tree matches the preserved recovery
+source archive after Git normalization. Recovery checksums and all 178 original
+workspace files are unchanged. No application code is added by this follow-up.
+
+Cloudflare controls are **owner-confirmed**: preview deployments None, automatic
+production deployments disabled, production branch main, effective Node 22.23.4.
+No independent Cloudflare API inspection is available. Render auto-deploy/PR
+previews remain off; its reported live commit is still 8ada74a, not the TiDB release.
+The checked remote baseline contains no repository .github workflows.
+
+The private Render export is the **newly saved TiDB configuration**, not the old
+Aiven baseline. It matches the locally tested DB host/port/database/runtime account
+and password without disclosing them. The old 8ada74a code requires AIVEN_* and
+cannot use DB-only settings; do not activate the saved configuration with that
+build. /health returned 200/ok but does not establish DB readiness or active env.
+
+Exact hosted-embedding settings for the reviewed implementation:
+
+```dotenv
+RAG_EMBEDDING_PROVIDER=gemini
+RAG_EMBEDDING_MODEL=gemini-embedding-001
+```
+
+The export lacks both names. Provider defaults to none (BM25-only); model defaults
+to gemini-embedding-001. Set both explicitly only during an approved configuration
+change to preserve the reviewed Gemini embedding integration. Generation remains
+GEMINI_MODEL=gemini-3.1-flash-lite, with GEMINI_API_KEY supplied privately.
+
+**Documented backup/recovery limitations accepted for push/PR only:**
+
+- Private backup remains partial: original Aiven environment and aiven-ca.pem
+  content are not backed up; linked Render group completeness and full Pages
+  environment/bindings backup completeness remain unconfirmed.
+- Actual Render tidb-ca.pem mount/readability and pending configuration activation
+  are unverified. These remain deployment checks; no secret file has been uploaded
+  by the assistant. Keep DB_CA_PATH=/etc/secrets/tidb-ca.pem and strict TLS/hostname
+  validation; never substitute the old Aiven certificate or an admin account.
+- Render's existing Aiven-era deploy is not a verified TiDB rollback target. The
+  local TiDB-compatible image passed live tests and archive reload, but cold-engine
+  and provider rollback have not been exercised. A local image cannot be deployed
+  from its unpublished local tag. First hosted cutover requires an approved
+  TiDB-compatible redeploy/configuration recovery plan, not a database/data rollback.
+- Pages deployment 06190243 identifies a prior production rollback candidate;
+  its full ID/retention and compatibility must be checked before relying on it.
+
+The provider backup status remains honestly marked incomplete. No waiver is
+recorded as completion, and no provider setting or secret value is published.
+The current authorization supersedes earlier pending-gate statements below;
+those are preserved dated evidence. Record the actual PR URL/head SHA outside
+this pre-publication commit once the authorized publication succeeds.
+
+---
+
+# Latest owner verification - 2026-11-24
+
+The owner confirmed production build log **nodejs@22.23.4**. Pages preview controls
+were previously All non-Production branches; the **owner changed them to None**.
+Automatic production deployments remain disabled and production branch remains main.
+The assistant made no hosting changes. These confirmations close the prior
+Cloudflare preview/Node verification gaps.
+
+**Do not push until private provider backups are complete and verified**, per the
+owner's latest instruction. The protected folder now contains
+`render/ZettaRemit-App.env`; safe parsing found 22 keys, no parse errors or
+duplicate keys. The owner confirmed this is the **newly saved TiDB configuration**,
+not the original Aiven baseline. Its DB host/port/database/user/password match the
+locally tested restricted runtime configuration (values not disclosed). JWT and
+internal secrets meet the checked length/independence requirements. It does not
+establish which configuration is active in the existing process.
+
+## Read-only Render save-impact check - 2026-11-24
+
+- Render still reports commit **8ada74afe061a1eb21ba9718b2f33406b7c2399a**, deployment
+  **dep-dc0f5bh7lnhs738fecsg**, status **live**, originally deployed November 21.
+  No newer deployment is listed; no build/deploy is queued or running in the result.
+  Auto-deploy and PR previews remain off; health-check path remains empty.
+- Events returned no records since November 23. Runtime logs nevertheless show
+  startup completion at 2026-11-23T22:44:29Z and 2026-11-24T05:03:11Z on different
+  instances. Therefore no new deployment is observed, but a restart/Free-tier
+  wakeup cannot be ruled out or attributed to the owner's save. Do not equate an
+  empty event list with proof that no process ever restarted.
+- Direct HTTPS GET /health returned **200**, status **ok**, in **0.47 seconds**.
+  An earlier request inheriting environment proxy settings timed out after 90
+  seconds; direct access succeeded. This does not establish a backend outage or
+  prove DB connectivity/authentication. Health is liveness only.
+- Source inspection proves **8ada74a requires AIVEN_*** and does not load DB_*.
+  A DB-only environment is **incompatible with that build**. Saved values are not
+  proof of runtime activation. Do not use Save and deploy / deploy latest main to
+  activate them with the old Aiven build; coordinate any activation only with the
+  separately approved TiDB-compatible release commit. No deployment/restart or
+  hosting change was performed during this inspection.
+- The export matches the reviewed non-secret DB/TLS-path/production/schema values
+  and includes required private keys. Actual Render tidb-ca.pem availability remains
+  unverified. Exported RAG_EMBEDDING_PROVIDER and RAG_EMBEDDING_MODEL are absent:
+  the candidate defaults to provider **none** and model gemini-embedding-001. To
+  preserve the reviewed hosted-embedding behavior, the planned approved configuration
+  needs RAG_EMBEDDING_PROVIDER=gemini and explicit RAG_EMBEDDING_MODEL=gemini-embedding-001.
+  No variables or Gemini models were changed during inspection.
+
+The aiven-ca.pem content backup remains absent, as do confirmations of Render
+linked-group and complete Pages environment/bindings backups. The newly saved
+TiDB export is not a pre-change Aiven restoration point. No private values were
+written into this documentation. Diagnostic summaries are stored only under the
+ignored protected provider backup folder.
+
+Application commit ec402c726a956a33020caf4873c1b6bc191afe96 and documentation commit
+270b7680bedf3c4cee97118e7ac92375dc5fabff remain local. This follow-up is uncommitted;
+no push or PR has occurred. Prior pending-preview statements below are dated evidence
+superseded here; provider backup completion is still a mandatory publication gate.
+
+---
+
 # Release publication preparation - 2026-11-24
 
 **Owner accepted the documented residual dependency risks for this prototype**, subject

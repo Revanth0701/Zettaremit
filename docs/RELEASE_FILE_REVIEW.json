@@ -226,7 +226,7 @@
       "status": "untracked",
       "disposition": "include_release_documentation",
       "reason": "Current application contract or release instructions.",
-      "sha256": "154e3882bd558fcd48c063564769a0800ba2948e8b9e686d63ba877f8c154eaa"
+      "sha256": "861368f18000b5ec03d6ce70a4a3e4bde76c882cad4dc145471cbf6f79685e4f"
     },
     {
       "path": "docs/TIDB_MIGRATION.md",
@@ -340,8 +340,12 @@
     "status": "Separate documentation commit approved; push/PR approved subject to no-deployment controls; merge/deploy not approved",
     "owner_verified_hosting": true,
     "production_risk_acceptance": "Owner accepted 2026-11-24 for current prototype, subject to documented mitigations",
-    "pages_preview_policy": "Awaiting owner confirmation; pre-push no-deployment gate",
-    "pages_effective_node_version": "Awaiting confirmation; tested deployment requires Node 22",
-    "provider_backup_status": "Partial metadata backups saved privately; environment/secret exports pending"
+    "pages_preview_policy": "Owner changed All non-Production branches to None; confirmed 2026-11-24",
+    "pages_effective_node_version": "22.23.4; owner verified production build log",
+    "provider_backup_status": "Incomplete; provenance confirmed saved TiDB settings, not original Aiven baseline; certificates/group/Pages completeness limitations documented",
+    "publication_gate": "Owner explicitly authorizes push/PR with documented incomplete backup limitations; no merge, restart, provider changes or deploy",
+    "render_save_impact": "Live old commit 8ada74a; no newer deployment; startup logs cannot be attributed to save; direct health 200; saved DB-only settings incompatible with old build",
+    "saved_configuration_gap": "RAG_EMBEDDING_PROVIDER absent defaults to none; actual Render TiDB CA mount unverified",
+    "backup_gate_waiver": "Owner confirmed 2026-11-24: Authorize push/PR with documented backup limitations"
   }
 }
