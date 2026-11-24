@@ -223,7 +223,9 @@ export default function RegistrationWizard({ navigation }) {
                       )}
 
                       <FieldLabel required>Email Address</FieldLabel>
+                      {/* RN Web filters name props; web-only refs set stable DOM names. */}
                       <TextInput
+                        {...(Platform.OS === 'web' ? { name: 'email', ref: input => input?.setAttribute('name', 'email'), autoComplete: 'username' } : {})}
                         accessibilityLabel="Email Address" aria-required={true}
                         style={styles.formInputBox}
                         placeholder="Enter your email address"
@@ -238,6 +240,7 @@ export default function RegistrationWizard({ navigation }) {
                       />
 
                       <PasswordField aria-invalid={!!error && /password/i.test(error)}
+                        {...(Platform.OS === 'web' ? { name: 'new-password', ref: input => input?.setAttribute('name', 'new-password'), autoComplete: 'new-password' } : {})}
                         style={styles.formInputBox}
                         placeholder="Enter your password"
                         placeholderTextColor="#A0AEC0"
@@ -247,7 +250,7 @@ export default function RegistrationWizard({ navigation }) {
                           if (error) setError('');
                         }}
                       />
-                      <PasswordField aria-invalid={!!error && /password/i.test(error)} label="Confirm Password" style={styles.formInputBox} placeholder="Re-enter your password" value={confirmPassword} onChangeText={value => { setConfirmPassword(value); setError(''); }} />
+                      <PasswordField aria-invalid={!!error && /password/i.test(error)} {...(Platform.OS === 'web' ? { name: 'confirm-password', ref: input => input?.setAttribute('name', 'confirm-password'), autoComplete: 'new-password' } : {})} label="Confirm Password" style={styles.formInputBox} placeholder="Re-enter your password" value={confirmPassword} onChangeText={value => { setConfirmPassword(value); setError(''); }} />
                     </View>
                   )}
 
@@ -332,7 +335,7 @@ export default function RegistrationWizard({ navigation }) {
                   {currentStep === 6 && (
                     <View>
                       <Text style={styles.mainTitle}>Choose an identity document</Text>
-                      <Text style={styles.subLabelText}>Profile verification is simulated. No real identity check is performed.</Text>
+                      <Text style={styles.subLabelText}>Profile verification is simulated. No real identity check is performed. Real identity documents are not collected, verified, or stored in simulation mode.</Text>
                       <FieldLabel required>Document type</FieldLabel>
                       <View style={styles.kycOptionsWrapper}>
                         {['PAN Card', 'Aadhar Card', 'Passport', 'Visa'].map(document => (

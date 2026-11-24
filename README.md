@@ -2,6 +2,13 @@
 
 ## Current unified release candidate
 
+Current TiDB release instructions, exact configuration and approval gates are in
+[the Render runbook](docs/RENDER_RUNBOOK.md), [migration review](docs/TIDB_MIGRATION.md)
+and [dependency security review](docs/DEPENDENCY_SECURITY_REVIEW.md). The canonical
+frontend is https://zettaremit.pages.dev/; the older project remains unchanged.
+The isolated candidate preserves the upstream application and README, with no
+commit, push or deployment authorized. Historical test counts below are dated evidence.
+
 The local integration candidate also includes registration reliability and signup/navigation
 updates. See [registration response contract](docs/REGISTRATION_CONTRACT.md) and
 [local reconciliation evidence](docs/GIT_RECONCILIATION.md). These changes are not deployed.
@@ -23,11 +30,11 @@ offline backend tests while local hosted AI is enabled. Prior verified tests: ba
 191, frontend 104, Java 10; these are release evidence, not a claim of new test execution.
 
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-zettaremit--app.pages.dev-0047AB?style=for-the-badge&logo=cloudflarepages&logoColor=white)](https://zettaremit-app.pages.dev)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-zettaremit.pages.dev-0047AB?style=for-the-badge&logo=cloudflarepages&logoColor=white)](https://zettaremit.pages.dev)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20Native%20%2F%20Expo%20Web-4630EB?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%20%2F%20Python%203.12-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Microservice](https://img.shields.io/badge/Microservice-Java%2021%20%2F%20Spring%20Boot%203.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Database](https://img.shields.io/badge/Database-MySQL%208%20(Aiven%20Cloud)-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://aiven.io)
+[![Database](https://img.shields.io/badge/Database-TiDB%20Cloud-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.pingcap.com/tidb-cloud/)
 [![AI Assistant](https://img.shields.io/badge/AI%20Assistant-BM25%20RAG%20%2B%20Gemini-FF6F00?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 
 > **Educational Simulation Notice:** ZettaRemit is a full-stack software engineering portfolio project demonstrating distributed system design, secure transaction processing, and low-latency AI retrieval for an Indian Rupee (INR) to US Dollar (USD) remittance workflow. It does not move fiat currency, integrate with central banking rails, or ingest real government identity documents.
@@ -75,7 +82,7 @@ The system follows a polyglot microservice model separating user-facing routing,
 │                     │ Shared Secret Bearer Auth     │ TLS v1.3         │
 │                     ▼                               ▼                  │
 │  ┌─────────────────────────────────────┐  ┌─────────────────────────┐  │
-│  │    TRANSACTION SERVICE (Java 21)    │  │   OLLAMA CLOUD LLM      │  │
+│  │    TRANSACTION SERVICE (Java 21)    │  │   GEMINI CLOUD LLM      │  │
 │  │  • Spring Boot 3.5.16 Microservice  │  │   Inference API         │  │
 │  │  • Exact BigDecimal Math            │  │   Model: gemini-3.1-flash-lite     │  │
 │  │  • Internal Loopback Only           │  │   (Remote AI execution) │  │
@@ -84,7 +91,7 @@ The system follows a polyglot microservice model separating user-facing routing,
                                     │ Encrypted MySQL Protocol (TLS required)
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                      AIVEN CLOUD MYSQL 8 DATABASE                      │
+│                      TIDB CLOUD MYSQL-COMPATIBLE DATABASE                      │
 │       • Enforced SSL/TLS with CA Certificate Verification              │
 │       • Users, Verified Profiles, and Signed Ledger Tables             │
 └────────────────────────────────────────────────────────────────────────┘
@@ -99,7 +106,7 @@ The system follows a polyglot microservice model separating user-facing routing,
 | **Frontend** | React Native `0.81`, Expo Web `~54`, React Navigation `v7` | Responsive mobile & desktop interface, rate ticker, cold-start readiness polling, AI streaming. |
 | **API Gateway** | Python `3.12`, FastAPI `0.161`, Pydantic `v2`, SQLAlchemy `2.x` | REST routing, JWT authentication, quote signing, rate limiting, and RAG orchestration. |
 | **Transaction Service** | Java `21`, Spring Boot `3.5.16`, Gradle `8.x`, Groovy Spock | Isolated internal microservice performing high-precision financial arithmetic. |
-| **Database** | MySQL `8.0` on Aiven Cloud, PyMySQL with SSL verification | ACID ledger storage, unique idempotency constraints, relational integrity. |
+| **Database** | TiDB Cloud (MySQL protocol), PyMySQL with SSL verification | ACID ledger storage, unique idempotency constraints, relational integrity. |
 | **AI Subsystem** | Custom BM25F Retriever, Gemini (`gemini-3.1-flash-lite`), SSE | Document chunking, title-boosted term retrieval, streaming responses; production memory headroom remains a release gate. |
 | **Infrastructure** | Cloudflare Pages, Render Docker Web Service, Multi-stage Docker | Global edge frontend deployment and co-hosted containerized microservices. |
 
@@ -278,7 +285,7 @@ npm --prefix frontend run build:web
 
 * **Frontend:** Deployed to **Cloudflare Pages**, serving static HTML/JS bundles globally via edge CDN with automated caching headers and sub-second asset distribution.
 * **Backend:** Deployed as a single multi-stage Docker container on **Render Free Web Service**, executing both the FastAPI gateway (Python) and the transaction service (Java 21) within a shared Linux environment.
-* **Database:** Hosted on **Aiven Cloud MySQL 8** with strict TLS/SSL certificate verification.
+* **Database:** Hosted on **TiDB Cloud** with strict TLS/SSL certificate verification.
 * **AI Subsystem:** Hybrid setup combining in-process BM25F document retrieval with remote Gemini inference.
 
 ---

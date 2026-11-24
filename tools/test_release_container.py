@@ -34,8 +34,8 @@ name='zettaremit-release-check-'+uuid.uuid4().hex[:8]
 env={'APP_ENV':'production','DATABASE_MODE':'cloud','SCHEMA_REVISION':'20261023_01',
      'LOCAL_CREATE_TABLES':'false','JWT_SECRET_KEY':secrets.token_hex(32),
      'INTERNAL_SERVICE_TOKEN':secrets.token_hex(32),'CORS_ORIGINS':'https://synthetic.example.com',
-     'AIVEN_HOST':'synthetic.invalid','AIVEN_PORT':'3306','AIVEN_DATABASE':'synthetic',
-     'AIVEN_USER':'synthetic','AIVEN_PASSWORD':secrets.token_hex(32),'AIVEN_CA_PATH':'/tmp/synthetic-ca.pem',
+     'DB_HOST':'synthetic.invalid','DB_PORT':'3306','DB_NAME':'synthetic',
+     'DB_USER':'synthetic','DB_PASSWORD':secrets.token_hex(32),'DB_CA_PATH':'/tmp/synthetic-ca.pem',
      'ENABLE_AI_ASSISTANT':'true','ENABLE_AI_AGENT':'true','RAG_EMBEDDING_PROVIDER':'none',
      'GEMINI_API_KEY':'synthetic-offline-key'}
 report={'network':'none','host_mounts':False,'published_ports':False,'memory_limit_mib':512}
@@ -97,6 +97,9 @@ print(json.dumps({'agent_modules_and_tools':True,'pinned_sdk_and_bcrypt':True,'a
     report['linux_test_suite_counts']=re.findall(r'Ran (\d+) tests',p.stderr)
     assert p.returncode==0,'Linux regression tests failed'
     report['memory']=h.metrics(name)
+    report['memory_events']=json.loads(h.docker('exec',name,'python','-c',
+        "import json;from pathlib import Path;print(json.dumps({k:int(v) for k,v in (line.split() for line in Path('/sys/fs/cgroup/memory.events').read_text().splitlines())}))"))
+    assert report['memory_events'].get('oom_kill',0)==0,'A container process was OOM-killed'
     report['image_id']=h.inspect(name)['Image']
     h.docker('stop','--time','20',name)
     state=h.inspect(name)['State']

@@ -1,4 +1,4 @@
-"""Explicit local-only synthetic E2E. Starts Java on loopback, never MySQL/Aiven."""
+"""Explicit local-only synthetic E2E. Starts Java on loopback, never cloud database."""
 import importlib
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import threading
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.request import build_opener, ProxyHandler
 
 
@@ -71,17 +71,28 @@ def main():
             def session():
                 with factory() as db:yield db
             api.app.dependency_overrides[api.get_db]=session
+            from datetime import datetime, timedelta, timezone
+            from decimal import Decimal
+            from exchange_rates import RateSnapshot
+            now=datetime.now(timezone.utc).replace(microsecond=0)
+            provider=Mock()
+            provider.get_rate.return_value=RateSnapshot(Decimal('83.50000000'),now,now+timedelta(hours=24),now,now+timedelta(hours=24))
+            api.app.dependency_overrides[api.get_exchange_rate_provider]=lambda:provider
             headers={'Authorization':'Bearer '+api.issue_access_token('SYNTHETIC-E2E'),'Idempotency-Key':'synthetic-e2e-request-0001'}
             with TestClient(api.app) as client:
-                first=client.post('/transactions/create',json={'recipient_name':'Synthetic','gross_amount':'1000.00'},headers=headers)
+                payload={'recipient_name':'Synthetic','gross_amount':'1000.00'}
+                quote=client.post('/simulation/quote',json=payload,headers=headers)
+                assert quote.status_code==200
+                payload['quote_token']=quote.json()['quote_token']
+                first=client.post('/transactions/create',json=payload,headers=headers)
                 assert first.status_code==201
                 body=first.json()['transaction']
                 assert body['recipient_amount']=='11.62' and body['status']=='SIMULATED'
-                repeat=client.post('/transactions/create',json={'recipient_name':'Synthetic','gross_amount':'1000.00'},headers=headers)
+                repeat=client.post('/transactions/create',json=payload,headers=headers)
                 assert repeat.status_code==201 and repeat.json()['transaction']['transaction_id']==body['transaction_id']
                 history=client.get('/transactions/',headers=headers)
                 assert history.status_code==200 and len(history.json())==1
-            print('PASS: loopback Java authentication, FastAPI coordination, decimal quote, idempotent replay and synthetic history. No MySQL/Aiven access.')
+            print('PASS: loopback Java authentication, FastAPI coordination, decimal quote, idempotent replay and synthetic history. No cloud database access.')
     finally:
         if api is not None:api.app.dependency_overrides.clear()
         if engine is not None:engine.dispose()

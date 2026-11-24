@@ -151,7 +151,9 @@ export default function LoginScreen({ navigation }) {
                 )}
 
                 <FieldLabel required>Email Address</FieldLabel>
+                {/* RN Web filters name props; web-only refs set stable DOM names. */}
                 <TextInput 
+                  {...(Platform.OS === 'web' ? { name: 'email', ref: input => input?.setAttribute('name', 'email'), autoComplete: 'username' } : {})}
                   style={styles.inputBox} 
                   accessibilityLabel="Email Address" aria-required={true} aria-invalid={!!error} placeholder="Enter your email address"
                   placeholderTextColor="#A0AEC0"
@@ -165,6 +167,7 @@ export default function LoginScreen({ navigation }) {
                 />
 
                 <PasswordField aria-invalid={!!error}
+                  {...(Platform.OS === 'web' ? { name: 'password', ref: input => input?.setAttribute('name', 'password'), autoComplete: 'current-password' } : {})}
                   style={styles.inputBox} 
                   placeholder="Password" 
                   placeholderTextColor="#A0AEC0"

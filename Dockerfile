@@ -11,7 +11,9 @@ COPY --from=java-runtime /opt/java/openjdk /opt/java/openjdk
 ENV JAVA_HOME=/opt/java/openjdk PATH="/opt/java/openjdk/bin:${PATH}" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY backend/requirements.txt backend/requirements-container.lock /app/
-RUN pip install --no-cache-dir -r requirements.txt -c requirements-container.lock && useradd --create-home --uid 10001 app
+RUN pip install --no-cache-dir -r requirements.txt -c requirements-container.lock && useradd --create-home --uid 10001 app \
+    && (getent group 1000 >/dev/null || groupadd --gid 1000 render-secrets) \
+    && usermod --append --groups 1000 app
 COPY --from=java-build /build/build/libs/*-SNAPSHOT.jar /app/transaction-service.jar
 COPY backend/*.py /app/backend/
 COPY backend/ai /app/backend/ai

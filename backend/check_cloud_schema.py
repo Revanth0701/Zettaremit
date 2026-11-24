@@ -9,6 +9,8 @@ from sqlalchemy.pool import NullPool
 from database_config import load_cloud_config, create_database_engine, safe_error_summary
 
 TABLES = ('users', 'user_verifications', 'transactions', 'service_transactions')
+# Current Java runtime excludes datasource/JPA configuration and only calculates quotes.
+OPTIONAL_TABLES = frozenset({'service_transactions'})
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -144,7 +146,9 @@ def compare(expected, actual):
             continue
         table_rows = [r for r in actual['tables'] if r['TABLE_NAME'] == table]
         if not table_rows:
-            report('CRITICAL',table,'','table missing or not visible to this account')
+            report('INFO' if table in OPTIONAL_TABLES else 'CRITICAL',table,'',
+                   'optional legacy table absent; current Java calculator has no database'
+                   if table in OPTIONAL_TABLES else 'table missing or not visible to this account')
             continue
         if table_rows[0]['TABLE_TYPE'] != 'BASE TABLE':
             report('CRITICAL',table,'','expected a base table')
@@ -255,10 +259,14 @@ def main():
         engine = create_database_engine(config, poolclass=NullPool)
         with engine.connect() as connection:
             try:
-                connection.exec_driver_sql('START TRANSACTION READ ONLY')
+                # TiDB does not support START TRANSACTION READ ONLY. Safety comes
+                # from the fixed information_schema SELECT allowlist in read_metadata.
                 actual = read_metadata(connection)
             finally:
                 connection.rollback()
+        present = {row['TABLE_NAME'] for row in actual['tables']}
+        notes = [note for note in notes
+                 if note[1] not in OPTIONAL_TABLES or note[1] in present]
         findings = notes + compare(expected,actual)
         for level,table,column,message in findings:
             # Identifiers originate only in project source, never server error text.
