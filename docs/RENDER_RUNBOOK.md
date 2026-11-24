@@ -1,3 +1,250 @@
+# Release publication preparation - 2026-11-24
+
+**Owner accepted the documented residual dependency risks for this prototype**, subject
+to the reviewed mitigations. Permission now covers a separate documentation commit,
+pushing release/tidb-reconciled-20261123 and opening a PR into main. It does **not**
+authorize merge, provider configuration changes or any production/preview deployment.
+Application commit remains ec402c726a956a33020caf4873c1b6bc191afe96.
+
+A fresh fetch confirmed canonical origin/main is still
+8ada74afe061a1eb21ba9718b2f33406b7c2399a. Read-only Render inspection reconfirmed
+repo/main, Oregon Free, Docker context '.', ./Dockerfile, auto-deploy and PR
+previews off, blank health-check path, and live deploy dep-dc0f5bh7lnhs738fecsg.
+There are no repository .github workflows in the reviewed remote baseline.
+
+Private backup location (ignored; current-user/SYSTEM ACL):
+`.local-backups/provider-config-20261124/` in the original workspace.
+Render service/recent-deployment metadata was saved from the connector; Cloudflare
+public settings were saved from the owner's Dashboard verification. **This is a
+partial backup**, not an environment/secret restore point. The available Render
+connector cannot read/export environment values, linked-group values or secret-file
+contents; no Cloudflare connection, authenticated CLI or provider API credentials
+were available. Provider discovery returned no Cloudflare plugin. The owner was
+asked to save those private exports directly into the protected local folder,
+never paste credentials into chat, and confirm Pages preview controls/Node version.
+No secret-bearing provider export or complete restoration was falsely asserted.
+
+**Publication gate:** Cloudflare preview behavior and effective production Node 22
+remain unconfirmed. Production auto-deploy being disabled does not establish that
+release-branch pushes/PRs cannot deploy previews. Do not push/open the PR while this
+could violate the owner's no-deployment instruction. If previews cover the release
+branch, request a specific owner decision; do not change settings or rely on a
+skip-ci bypass. Private provider backup completion also remains pending. The risk
+acceptance closes the dependency-acceptance gate only, not these execution gates.
+
+Existing recovery image/source archive checksums and the original 178-file working
+state must remain unchanged. No application implementation changes or fresh live
+DB/AI writes are part of this documentation/publication step. The earlier proposal
+below is retained as dated planning; the current authorization/status above
+supersedes its 'no push approval' and 'risk acceptance pending' statements.
+
+---
+
+# Controlled TiDB production release - owner verification 2026-11-24
+
+**Status: local release commit created; no push, merge, hosting change or deployment approved.**
+Application candidate: **ec402c726a956a33020caf4873c1b6bc191afe96**, branch
+`release/tidb-reconciled-20261123`, parent **8ada74afe061a1eb21ba9718b2f33406b7c2399a**.
+Exactly 29 reviewed files were committed. Original workspace and recovery snapshots
+remain preserved. This November 24 documentation update is **uncommitted**, not a
+change to that application commit; it needs separate commit approval if published.
+The current section supersedes precommit status/uncaptured-setting statements and
+proposed commit commands in the dated preparation record below.
+
+## Owner-verified current hosting baseline
+
+These are owner-reported Dashboard observations from 2026-11-24, not a new API
+inspection or an applied configuration change. **There is no repository mismatch.**
+
+| Setting | Existing Cloudflare Pages | Existing Render backend |
+| --- | --- | --- |
+| Project/service | zettaremit | ZettaRemit-App; srv-dbdv8o3ncjis73dkflag |
+| Repository | Revanth0701/Zettaremit | Revanth0701/Zettaremit |
+| Production branch | main | main |
+| Current production commit | 8ada74a | 8ada74a |
+| Current deployment URL | https://06190243.zettaremit.pages.dev | https://zettaremit-app.onrender.com |
+| Stable production URL | https://zettaremit.pages.dev/ | https://zettaremit-app.onrender.com |
+| Root/context | frontend | Repository root |
+| Build | npm ci && npm run build:web | Dockerfile ./Dockerfile; default supervisor CMD |
+| Output / build system | dist / Version 3 | Docker / Oregon / Free |
+| Production auto-deploy | Disabled | Off |
+| PR previews | Not supplied; verify before release-branch push or PR | Off |
+| Frontend API | EXPO_PUBLIC_API_URL=https://zettaremit-app.onrender.com | Not applicable |
+| Health check | Not applicable | Currently empty; set /health only after approval |
+| Current database configuration | No database credentials belong here | AIVEN_*; existing secret file aiven-ca.pem |
+
+The Pages URL identifies short deployment ID **06190243**, not its full API UUID.
+Capture the full deployment ID/project ID and retention state privately before
+release. Prior read-only Render baseline was dep-dc0f5bh7lnhs738fecsg at 8ada74a;
+reconfirm the actual current deployment ID before any mutation. Preserve all
+unrelated variables, domains, headers, redirects, bindings and existing URLs.
+The older `zettaremit-app` Pages project remains untouched.
+
+Version 3 alone does not confirm Node 22. The candidate was tested on Node 22;
+check the effective production NODE_VERSION/build log and prepare **NODE_VERSION=22**
+if needed, with configuration approval. Pages preview settings are separate from
+production auto-deploy and remain a pre-push gate, not an assumed disabled setting.
+[Pages branch controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/).
+
+## Confirmed candidate configuration
+
+Use the exact environment table in the dated record below. Non-secret values are:
+
+```dotenv
+APP_ENV=production
+DATABASE_MODE=cloud
+LOCAL_CREATE_TABLES=false
+SCHEMA_REVISION=20261023_01
+DB_PORT=4000
+DB_NAME=zettaremit
+DB_CA_PATH=/etc/secrets/tidb-ca.pem
+CORS_ORIGINS=https://zettaremit.pages.dev,https://zettaremit-app.pages.dev
+ENABLE_AI_ASSISTANT=true
+ENABLE_AI_AGENT=true
+GEMINI_MODEL=gemini-3.1-flash-lite
+RAG_EMBEDDING_PROVIDER=gemini
+RAG_EMBEDDING_MODEL=gemini-embedding-001
+RAG_BM25_FALLBACK=true
+RAG_FINAL_CHUNKS=3
+RAG_SYNC_SECONDS=60
+```
+
+Preserve additional valid existing CORS origins. Copy **DB_HOST, full DB_USER and
+DB_PASSWORD only from the private tested backend/.env.cloud into Render's secret
+configuration**, without logging them. Use the DNS endpoint, never its IP. Local
+safe comparison on November 24 confirmed port/database/runtime-account selection
+and a parseable CA with certificate/hostname validation and minimum TLS 1.2; no
+new live database or Gemini requests were needed for this documentation update.
+
+Preserve existing valid JWT_SECRET_KEY, INTERNAL_SERVICE_TOKEN and GEMINI_API_KEY;
+JWT/internal secrets must be independent and at least 32 bytes. Do not rotate
+sessions accidentally. Never copy private configuration into Pages or Git. The
+runtime account is `<instance-prefix>.zetta_runtime`, REQUIRE SSL, with only:
+users SELECT/INSERT, user_verifications INSERT, transactions SELECT/INSERT.
+No DDL, DELETE, global/admin or GRANT OPTION privileges; no Java database account.
+
+Preserve existing bounded RAG/agent overrides. Template defaults, if absent:
+RAG_BM25_CANDIDATES=5, RAG_VECTOR_CANDIDATES=5, RAG_RRF_K=60,
+AGENT_MAX_TOOL_CALLS=8, AGENT_MAX_ITERATIONS=5, AGENT_TIMEOUT_SECONDS=45,
+AGENT_TOOL_TIMEOUT_SECONDS=8, AGENT_RATE_PROVIDER=exchange_rate_api.
+Render supplies PORT. Keep Docker CMD unchanged; the supervisor sets authenticated
+Java loopback at 127.0.0.1:8082. Do not publish Java or supply a Java datasource.
+
+Create **tidb-ca.pem** as a Render Secret File containing the complete verified
+`backend/certs/tidb-ca.pem`; the runtime path must be **/etc/secrets/tidb-ca.pem**.
+The existing aiven-ca.pem is not a substitute. No private key, build argument or
+CA copied into an image layer. The committed Dockerfile adds UID 10001 to group
+1000; local read-only CA/TLS tests passed. Verify actual runtime mount readability
+after deployment. [Docker secret-file guidance](https://render.com/docs/docker-secrets).
+
+Confirmed TiDB allowlist: **74.220.48.0/24 and 74.220.56.0/24**, both authorized;
+public endpoint enabled, no allow-all rule. Preserve the authorized local rule.
+Outbound DNS/TCP 4000 to DB_HOST and HTTPS 443 for rates/Gemini are required.
+Browser-to-backend is HTTPS; /health is liveness, not proof of DB/AI readiness.
+
+## Controlled sequence - plan only, separate approvals required
+
+1. **Accept risk and capture recovery configuration.** Explicitly accept the
+   remaining one high and 11 moderate npm entries (see DEPENDENCY_SECURITY_REVIEW.md).
+   image-size 1.2.1 can hang a build on crafted images; minimatch 9.0.9/10.2.5 can
+   amplify malicious patterns. glob 13.0.7's compatible repair passed its regression
+   but remains scanner-flagged; inherited Expo entries are build-chain findings.
+   Build trusted inputs in bounded isolated jobs; serve only dist, no tooling/dev
+   server/source maps. These leaves were absent from the reviewed browser export
+   and Python/Java image. No breaking upgrades or automatic acceptance.
+   Privately back up Render service/group environment values and provenance,
+   secret-file contents/references (including Aiven CA), IDs, commands, health path,
+   domains and both providers' settings/deploy IDs. Store outside Git with restricted
+   access. Preserve local image/source archives and checksum record; record timestamp.
+   The hosting configuration backup has **not** been performed by this documentation
+   update. Confirm Pages preview behavior/Node version and retained rollback artifact.
+2. **Publish Git only after push approval.** No new application commit is required.
+   This documentation follow-up may be committed separately only if approved;
+   do not amend ec402c7 implicitly. From the isolated release worktree, verify clean
+   reviewed source/index, repeat credential/inventory checks and fetch origin/main.
+   If remote moved from 8ada74a, stop for renewed reconciliation. For the currently
+   committed candidate, the proposed explicit push is:
+
+   ```powershell
+   git push origin ec402c726a956a33020caf4873c1b6bc191afe96:refs/heads/release/tidb-reconciled-20261123
+   ```
+
+   This publishes a review branch, not main. Check that Pages preview deployment is
+   disabled for it or explicitly approved **before** pushing or creating a PR.
+   Open a PR into canonical main; merge only with separate approval and required
+   checks. No force-push or push to prod-remote. Record the actual merged main SHA
+   as **RELEASE_SHA** and review its tree; both providers must use that same SHA.
+3. **Prepare the existing Render service after configuration/deployment approval.**
+   Confirm no queued deployment, unchanged repo/main/context/CMD and auto-deploy off.
+   Prepare DB_*, runtime secrets, CORS/AI settings above and tidb-ca.pem, then /health.
+   Use **Save only** for variables/secret files where offered; they activate on the
+   next deploy. Do not choose Save and deploy with the old Aiven build. Inspect
+   each save action: if it will deploy immediately, stop and coordinate that action
+   within the explicitly approved release; never accidentally deploy old/new code
+   with a partial configuration. No Blueprint import/new service/predeploy SQL.
+   Preserve AIVEN_* and aiven-ca.pem through initial verification, or remove them
+   only as an approved coordinated change after a secure backup; the new cloud
+   loader ignores AIVEN_*. Later approved cleanup must not alter shared groups.
+   [Render configuration save options](https://render.com/docs/configure-environment-variables).
+4. **Deploy Render first, after deployment approval.** Manually deploy the specific
+   approved RELEASE_SHA through the existing service; monitor its exact build and
+   deployment ID to live status, not merely accepted/queued. Verify DB_*/CA/grants,
+   /health, loopback authentication, synthetic auth/rates/quote/simulation/replay/
+   history isolation and Gemini with unchanged generation/embedding models. Recheck
+   CORS for canonical/retained legacy origins and rejection of an unrelated origin.
+   No customer records or secrets in diagnostics. Keep the frontend baseline if
+   backend acceptance fails. Free-tier memory/headroom remains an operational risk.
+5. **Deploy canonical Pages only after backend acceptance and frontend approval.**
+   Keep automatic production deployments disabled. Trigger a new Git-backed build
+   of main at RELEASE_SHA, using the recorded root/command/dist/API URL and Node 22.
+   The documented API route is POST /accounts/{account_id}/pages/projects/zettaremit/deployments
+   with multipart field branch=main, using a privately authenticated Pages Write
+   token. A supported Dashboard action that explicitly builds the same main SHA is
+   also acceptable. Do not retry baseline 06190243 assuming it selects the new SHA.
+   The API builds branch HEAD; commit_hash is associated metadata, not an assumed
+   checkout pin. Verify main still equals RELEASE_SHA immediately before triggering
+   and verify the returned source SHA, production environment, non-skipped state
+   and terminal success. Stop on any mismatch. No API call or new token is needed
+   now; authenticated deployment capability/account ID remain execution prerequisites.
+   [Pages deployment API](https://developers.cloudflare.com/api/resources/pages/subresources/projects/subresources/deployments/methods/create/).
+6. **Post-deployment acceptance.** Record both deployment IDs and common source SHA.
+   Verify https://zettaremit.pages.dev/ in a normal browser, built API URL, security
+   headers/HTTPS, canonical and legacy CORS, registration/login/auth rejection,
+   live rates, signed quote/3% decimal fee, SIMULATED transaction, idempotent replay,
+   owner history/isolation, identity-simulation disclosure and authenticated Gemini
+   JSON/SSE completion. Keep synthetic records. Check real Render CA permissions,
+   strict hostname validation, TiDB destination/runtime grants, memory/restarts,
+   cold starts and model quota. /health alone cannot approve the release. Keep
+   automatic deploys off and record configuration versions and acceptance results.
+7. **Rollback on failed acceptance, only with recovery approval.** Frontend: use
+   the retained successful production deployment corresponding to 06190243 /
+   https://06190243.zettaremit.pages.dev after resolving its full ID; verify API
+   compatibility. This is an identified candidate, not an executed rollback drill.
+   [Pages rollback requirements](https://developers.cloudflare.com/pages/configuration/rollbacks/).
+   Backend: do **not** assume native rollback to Aiven-era 8ada74a is TiDB-compatible.
+   It can reuse old deploy environment/health/command settings; shared groups have
+   separate state. [Render rollback configuration](https://render.com/docs/rollbacks).
+   For first cutover use an approved standard redeploy/configuration repair of the
+   tested TiDB RELEASE_SHA and preserved DB_*/CA/runtime settings. After the first
+   hosted TiDB acceptance, record that deploy as the future verified baseline.
+   The local recovery image passed live TiDB tests and archive reload on the same
+   Docker engine; cold-engine and hosting-provider restoration remain untested.
+   Do not switch back to Aiven, drop/recreate tables, restore old data, delete records,
+   weaken TLS, use admin credentials or run historical SQL as application rollback.
+
+No new tests were required for documentation-only edits. Earlier candidate evidence
+remains: frontend 122, backend 217, Java 10, Linux-container 217, four container
+scenarios and 19 live container smoke checks passed. One initial direct Gemini
+failure followed by successful retry/full container run remains recorded below.
+Deployment is not authorized or declared complete by these results.
+
+---
+
+# Historical preparation record - 2026-11-23
+
+The following is retained dated evidence. Its precommit statements and formerly
+missing hosting settings are superseded by the owner verification above.
+
 # Render production preparation — 2026-11-23
 
 **Current review: source reconciliation completed locally; release remains unapproved.**
@@ -453,7 +700,7 @@ dependencies remain excluded. This does not certify every historical commit or
 every external provider log. No existing database record was read or changed by
 this final repository review.
 
-### Reconciled source and retained upstream artifacts ? 2026-11-23
+### Reconciled source and retained upstream artifacts - 2026-11-23
 
 Fetched origin/main at 8ada74a and inspected all seven upstream commits:
 412fae4 (initial application), b4dbfaf (professional README/ignore cleanup),

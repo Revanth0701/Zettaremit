@@ -1,3 +1,23 @@
+# Owner risk acceptance - 2026-11-24
+
+The owner explicitly accepted the documented residual dependency risks for the
+current ZettaRemit **prototype** release, subject to the reviewed mitigations.
+This covers the reported one high and 11 moderate npm entries and their stated
+build/development exposure; it does not remediate the underlying image-size or
+minimatch defects or change the scanner results. Keep trusted source/assets/
+patterns, bounded isolated builds, the reviewed lockfile, static-only publishing,
+no public dev server/tooling/source maps, and no forced breaking upgrades.
+
+Acceptance is recorded for application commit
+`ec402c726a956a33020caf4873c1b6bc191afe96`. No risk scope is expanded to new code,
+untrusted-input builds or real financial operations. Provider configuration and
+backup verification remain separate gates; merge and deployment are not authorized.
+Earlier 'acceptance pending' wording below describes the prior review state and
+is superseded by this explicit owner decision. No dependency or application files
+were changed to record this acceptance.
+
+---
+
 # Final dependency security review — 2026-11-23
 
 Scope: the one high and 11 moderate **npm package entries** in the ZettaRemit
@@ -193,7 +213,7 @@ container evidence remains excluded. Run the inventory verifier before any
 approved staging. No blanket add, commit, push, deployment or live Render update
 is authorized by this report.
 
-## Reconciled main-based verification ? 2026-11-23
+## Reconciled main-based verification - 2026-11-23
 
 The isolated release candidate is based on fetched canonical main 8ada74a and
 preserves the upstream README/ignore/application improvements. Fresh audit still

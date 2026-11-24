@@ -205,7 +205,7 @@
       "status": "untracked",
       "disposition": "include_release_documentation",
       "reason": "Current application contract or release instructions.",
-      "sha256": "54d16da5f3f5072fe051e41c74108e203826d553a01edad669a220fc2252defd"
+      "sha256": "3cf801a5c37524af620a354f46b1288674ab71efbb68f6ffe0dc12a97c5da166"
     },
     {
       "path": "docs/RELEASE.md",
@@ -226,7 +226,7 @@
       "status": "untracked",
       "disposition": "include_release_documentation",
       "reason": "Current application contract or release instructions.",
-      "sha256": "4c86c2881b4011b27492f234e85d126245ce386accdf6c61853c0c5ed8c01f3f"
+      "sha256": "154e3882bd558fcd48c063564769a0800ba2948e8b9e686d63ba877f8c154eaa"
     },
     {
       "path": "docs/TIDB_MIGRATION.md",
@@ -333,5 +333,15 @@
       "reason": "Required backend, container or migration validation.",
       "sha256": "2622cfc4f02bf156a84c0cbe6ff80e9bbe673df8ea526b4c294b5cb53295da11"
     }
-  ]
+  ],
+  "local_release_commit": "ec402c726a956a33020caf4873c1b6bc191afe96",
+  "documentation_followup": {
+    "date": "2026-11-24",
+    "status": "Separate documentation commit approved; push/PR approved subject to no-deployment controls; merge/deploy not approved",
+    "owner_verified_hosting": true,
+    "production_risk_acceptance": "Owner accepted 2026-11-24 for current prototype, subject to documented mitigations",
+    "pages_preview_policy": "Awaiting owner confirmation; pre-push no-deployment gate",
+    "pages_effective_node_version": "Awaiting confirmation; tested deployment requires Node 22",
+    "provider_backup_status": "Partial metadata backups saved privately; environment/secret exports pending"
+  }
 }
