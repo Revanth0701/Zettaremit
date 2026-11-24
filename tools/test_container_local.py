@@ -50,6 +50,7 @@ def get(path,port=8000,headers=None,data=None):
     except HTTPError as error:
         return error.code,None
 assert os.getuid()!=0
+assert 1000 in os.getgroups()
 assert get('/health')[0]==200
 assert get('/transactions/')[0]==401
 assert get('/transactions/',headers={'Authorization':'Bearer invalid'})[0]==401
@@ -65,7 +66,7 @@ for name in ('tcp','tcp6'):
 java_sockets=[value.split(':')[0] for value in listeners if value.endswith(':1F92')]
 allowed={'0100007F','0000000000000000FFFF00000100007F','00000000000000000000000001000000'}
 assert java_sockets and all(value in allowed for value in java_sockets)
-# Java's environment must not receive JWT or Aiven settings.
+# Java's environment must not receive JWT or database settings.
 java_pids=[]
 for entry in Path('/proc').iterdir():
     if entry.name.isdigit():
@@ -74,7 +75,7 @@ for entry in Path('/proc').iterdir():
         except OSError:pass
 assert len(java_pids)==1
 keys={value.split(b'=',1)[0] for value in (Path('/proc')/java_pids[0]/'environ').read_bytes().split(b'\0') if value}
-assert b'JWT_SECRET_KEY' not in keys and not any(key.startswith(b'AIVEN_') for key in keys)
+assert b'JWT_SECRET_KEY' not in keys and not any(key.startswith((b'DB_', b'AIVEN_')) for key in keys)
 # Image must contain no copied environment files or customer reports/databases.
 for root,dirs,files in os.walk('/app'):
     assert not any(name.startswith('.env') or name.endswith(('.pem','.sql','.db','.csv','.dump','.key')) for name in files)
@@ -122,7 +123,17 @@ with patch('pymysql.connections.Connection.connect',side_effect=AssertionError('
         content=b''.join(message.get('body',b'') for message in sent if message['type']=='http.response.body')
         return status,json.loads(content)
     async def run():
-        payload={'recipient_name':'Synthetic','gross_amount':'1000.00'}
+        from datetime import datetime, timedelta, timezone
+        from decimal import Decimal
+        from exchange_rates import RateSnapshot
+        from money import TransferRequest, amounts
+        from quotes import issue_quote
+        now=datetime.now(timezone.utc).replace(microsecond=0)
+        snapshot=RateSnapshot(Decimal('83.50000000'),now,now+timedelta(hours=24),now,now+timedelta(hours=24))
+        transfer=TransferRequest(recipient_name='Synthetic',gross_amount='1000.00')
+        fee,net,received=amounts(transfer.gross_amount,snapshot.inr_per_usd)
+        accepted=issue_quote('SYNTHETIC-A',transfer,snapshot,dict(feeDeducted=fee,netAmount=net,recipientAmount=received,exchangeRate=snapshot.inr_per_usd),'QUOTE-'+'a'*32)
+        payload={'recipient_name':'Synthetic','gross_amount':'1000.00','quote_token':accepted.quote_token}
         status,created=await request('POST','/transactions/create',payload)
         assert status==201 and created['transaction']['recipient_amount']=='11.62'
         status,replay=await request('POST','/transactions/create',payload)
@@ -156,7 +167,17 @@ def request(path,body=None):
     try:
         with opener.open(Request('http://127.0.0.1:8000'+path,data=data,headers=headers),timeout=15) as response:return response.status,json.loads(response.read())
     except HTTPError as error:return error.code,None
-payload={'recipient_name':'Synthetic','gross_amount':'1000.00'}
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+from exchange_rates import RateSnapshot
+from money import TransferRequest, amounts
+from quotes import issue_quote
+now=datetime.now(timezone.utc).replace(microsecond=0)
+snapshot=RateSnapshot(Decimal('83.50000000'),now,now+timedelta(hours=24),now,now+timedelta(hours=24))
+transfer=TransferRequest(recipient_name='Synthetic',gross_amount='1000.00')
+fee,net,received=amounts(transfer.gross_amount,snapshot.inr_per_usd)
+accepted=issue_quote('SYNTHETIC-A',transfer,snapshot,dict(feeDeducted=fee,netAmount=net,recipientAmount=received,exchangeRate=snapshot.inr_per_usd),'QUOTE-'+'a'*32)
+payload={'recipient_name':'Synthetic','gross_amount':'1000.00','quote_token':accepted.quote_token}
 status,first=request('/transactions/create',payload)
 assert status==201 and first['transaction']['recipient_amount']=='11.62'
 status,replay=request('/transactions/create',payload)
@@ -181,7 +202,7 @@ from internal_service import calculate_transfer
 from money import TransferRequest
 request=TransferRequest(recipient_name='Synthetic',gross_amount='1000.00')
 def one(index):
-    result=calculate_transfer('SYNTHETIC-LOAD',request,'synthetic-concurrent-'+str(index).zfill(8))
+    result=calculate_transfer('SYNTHETIC-LOAD',request,'synthetic-concurrent-'+str(index).zfill(8),rate=__import__('decimal').Decimal('83.50000000'))
     assert str(result['recipientAmount'])=='11.62'
 with ThreadPoolExecutor(max_workers=4) as pool:
     assert len(list(pool.map(one,range(80))))==80
@@ -219,8 +240,8 @@ def main():
     environment={'APP_ENV':'production','DATABASE_MODE':'cloud','SCHEMA_REVISION':'20261023_01',
         'LOCAL_CREATE_TABLES':'false','JWT_SECRET_KEY':secrets.token_hex(32),
         'INTERNAL_SERVICE_TOKEN':secrets.token_hex(32),'CORS_ORIGINS':'https://synthetic.example.com',
-        'AIVEN_HOST':'synthetic.invalid','AIVEN_PORT':'3306','AIVEN_DATABASE':'synthetic',
-        'AIVEN_USER':'synthetic','AIVEN_PASSWORD':secrets.token_hex(32),'AIVEN_CA_PATH':'/tmp/synthetic-ca.pem'}
+        'DB_HOST':'synthetic.invalid','DB_PORT':'3306','DB_NAME':'synthetic',
+        'DB_USER':'synthetic','DB_PASSWORD':secrets.token_hex(32),'DB_CA_PATH':'/tmp/synthetic-ca.pem'}
     if args.fixture_db:
         environment.update(APP_ENV='test',DATABASE_MODE='local',DATABASE_URL='sqlite:////tmp/synthetic-fixture.db',SYNTHETIC_SQLITE_FIXTURE='true')
     report={'memory_limit_mib':args.memory_mib,'network':'none','published_ports':False,'host_mounts':False,'failure_mode':args.failure_mode,'fixture_db':args.fixture_db}

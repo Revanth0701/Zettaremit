@@ -23,3 +23,41 @@ test('non-JSON upstream 5xx responses still give the safe registration retry mes
   const api = createClient({ baseUrl: 'https://api.example.com', storage: {}, fetchImpl: async () => ({ status: 502, ok: false, json: async () => { throw new Error('HTML gateway body'); } }) });
   await assert.rejects(api.register(payload), error => error.status === 502 && /Please try again/.test(error.message));
 });
+
+test('independent clients preserve exact passwords and normalize login email without shared sessions', async () => {
+  const { randomBytes } = require('node:crypto');
+  const password = ` ${randomBytes(20).toString('hex')}\u00e9 `;
+  const email = 'cross-client@example.com';
+  let registered, signupSession = null, loginSession = null;
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    const body = JSON.parse(options.body);
+    calls.push({ url, options });
+    let status, response;
+    if (url.endsWith('/users/register')) {
+      registered = body;
+      status = 201; response = { status: 'created' };
+    } else {
+      const valid = body.email === registered.email && body.password === registered.password;
+      status = valid ? 200 : 401;
+      response = valid ? { access_token: 'synthetic-session', expires_in: 900, full_name: 'Synthetic' } : {};
+    }
+    return { status, ok: status < 400, json: async () => response };
+  };
+  const signup = createClient({ baseUrl: 'https://api.example.com', fetchImpl, storage: {
+    get: async () => signupSession, set: async value => { signupSession = value; }, clear: async () => { signupSession = null; },
+  } });
+  const login = createClient({ baseUrl: 'https://api.example.com', fetchImpl, storage: {
+    get: async () => loginSession, set: async value => { loginSession = value; }, clear: async () => { loginSession = null; },
+  } });
+  // RegistrationWizard canonicalizes signup email before calling register().
+  await signup.register({ full_name: 'Synthetic', email: ` ${email.toUpperCase()} `.trim().toLowerCase(), password });
+  await login.login(` ${email.toUpperCase()} `, password);
+  assert.ok(registered.password === password, 'Signup must preserve password bytes');
+  assert.ok(JSON.parse(calls[1].options.body).password === password, 'Login must preserve password bytes');
+  assert.ok(JSON.parse(calls[1].options.body).email === email, 'Login must canonicalize email');
+  assert.ok(calls.every(call => call.options.headers.Authorization === undefined));
+  assert.ok(signupSession === null && loginSession !== null, 'Sessions must be independent');
+  assert.ok(!Object.hasOwn(loginSession, 'password'));
+  await assert.rejects(login.login(email, password.trim()), error => error.status === 401);
+});

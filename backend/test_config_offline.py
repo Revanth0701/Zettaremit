@@ -18,17 +18,28 @@ class ConfigTests(unittest.TestCase):
         for mode in ('','Cloud','invalid'):
             with self.assertRaises(dc.ConfigurationError):dc.load_database_config(environ={'DATABASE_MODE':mode})
     def test_cloud_literal_password_and_strict_tls(self):
-        env={'AIVEN_HOST':'synthetic.invalid','AIVEN_PORT':'12345','AIVEN_DATABASE':'synthetic','AIVEN_USER':'synthetic','AIVEN_PASSWORD':'literal#${secret}@:/','AIVEN_CA_PATH':'ca.pem','APP_ENV':'production'}
+        env={'DB_HOST':'synthetic.invalid','DB_PORT':'12345','DB_NAME':'synthetic','DB_USER':'synthetic','DB_PASSWORD':'literal#${secret}@:/','DB_CA_PATH':'ca.pem','APP_ENV':'production'}
         context=Mock()
         with patch.object(Path,'is_file',return_value=False),patch.object(dc.ssl,'create_default_context',return_value=context):
             cfg=dc.load_cloud_config(environ=env)
-            self.assertEqual(cfg.url.password,env['AIVEN_PASSWORD'])
+            self.assertEqual(cfg.url.password,env['DB_PASSWORD'])
             self.assertTrue(context.check_hostname)
             self.assertEqual(context.verify_mode,ssl.CERT_REQUIRED)
             self.assertEqual(context.minimum_version,ssl.TLSVersion.TLSv1_2)
+    def test_production_ignores_private_cloud_file(self):
+        env=dict(APP_ENV='production',DB_HOST='synthetic.invalid',DB_PORT='4000',
+                 DB_NAME='synthetic',DB_USER='synthetic-runtime',DB_PASSWORD='synthetic-secret',
+                 DB_CA_PATH=str(Path.cwd()/'synthetic-tidb-ca.pem'))
+        with patch.object(Path,'is_file',return_value=True), patch.object(Path,'open') as private_file, patch.object(dc.ssl,'create_default_context') as context:
+            cfg=dc.load_cloud_config(environ=env)
+            private_file.assert_not_called()
+            self.assertEqual((cfg.url.host,cfg.url.port,cfg.url.database,cfg.url.username),
+                             ('synthetic.invalid',4000,'synthetic','synthetic-runtime'))
+            context.assert_called_once_with(cafile=env['DB_CA_PATH'])
+
     def test_no_insecure_ca_fallback(self):
         with patch.object(Path,'is_file',return_value=False),patch.object(dc.ssl,'create_default_context',side_effect=FileNotFoundError):
-            with self.assertRaises(dc.ConfigurationError):dc.load_cloud_config(environ=dict(AIVEN_HOST='synthetic',AIVEN_PORT='123',AIVEN_DATABASE='synthetic',AIVEN_USER='synthetic',AIVEN_PASSWORD='synthetic',AIVEN_CA_PATH='missing'))
+            with self.assertRaises(dc.ConfigurationError):dc.load_cloud_config(environ=dict(DB_HOST='synthetic',DB_PORT='123',DB_NAME='synthetic',DB_USER='synthetic',DB_PASSWORD='synthetic',DB_CA_PATH='missing'))
     def test_cloud_create_all_guard(self):
         tree=ast.parse((Path(__file__).parent/'main.py').read_text(encoding='utf-8'))
         guard=next(n for n in tree.body if isinstance(n,ast.If) and 'database_config.mode' in ast.unparse(n.test) and 'LOCAL_CREATE_TABLES' in ast.unparse(n.test))

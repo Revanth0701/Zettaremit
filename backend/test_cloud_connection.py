@@ -6,7 +6,7 @@ from sqlalchemy.pool import NullPool
 from database_config import (ConfigurationError, load_cloud_config,
                              create_database_engine, safe_error_summary)
 
-TABLES = ("users", "user_verifications", "transactions", "service_transactions")
+TABLES = ("users", "user_verifications", "transactions")
 
 
 def main():
@@ -21,10 +21,7 @@ def main():
         engine = create_database_engine(config, poolclass=NullPool)
         with engine.connect() as connection:
             try:
-                stage = "starting read-only transaction"
-                connection.exec_driver_sql("START TRANSACTION READ ONLY")
                 stage = "reading database metadata"
-                database = connection.exec_driver_sql("SELECT DATABASE()").scalar_one()
                 version = connection.exec_driver_sql("SELECT VERSION()").scalar_one()
                 counts = {}
                 for table in TABLES:
@@ -36,7 +33,6 @@ def main():
             finally:
                 connection.rollback()
         print("Connected with CA certificate and hostname verification enabled.")
-        print(f"Database: {database}")
         print(f"MySQL version: {version}")
         for table, count in counts.items():
             print(f"{table}: {count} rows")

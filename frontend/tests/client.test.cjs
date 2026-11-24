@@ -36,12 +36,12 @@ test('login 401 preserves existing session and does not call onUnauthorized',asy
  assert.equal(ctx.session,initialSession);
  assert.equal(ctx.unauthorized,0);
 });
-test('login 422 returns generic incorrect email or password error',async()=>{
+test('login 422 returns validation guidance without exposing server details',async()=>{
  const ctx=setup([{status:422,body:{detail:'Validation error'}}]);
  const initialSession=ctx.session;
  await assert.rejects(
   ()=>ctx.client.login('not-an-email','short'),
-  error=>error.message==='Incorrect email or password. Please try again.' && error.status===422
+  error=>error.message==='Check your sign-in details. Enter a valid email address and password.' && error.status===422
  );
  assert.equal(ctx.session,initialSession);
  assert.equal(ctx.unauthorized,0);

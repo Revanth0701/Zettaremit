@@ -19,7 +19,7 @@ ZettaRemit is an educational cross-border remittance simulation application. It 
 1. **Frontend**: Built with React Native and Expo Web, deployed to Cloudflare Pages (`https://zettaremit-app.pages.dev`). Provides a clean, responsive web interface for desktop, laptop, and mobile devices.
 2. **Backend API**: Built with Python FastAPI, hosted on Render (`https://zettaremit-app.onrender.com`). Manages user registration, JWT session issuance, rate limiting, quote coordination, and transaction recording.
 3. **Calculation Service**: An internal Java Spring Boot microservice running on port 8082. Performs high-precision, deterministic financial calculations independently to verify transfer arithmetic before any quote or transaction is finalized.
-4. **Database**: Managed Aiven MySQL database storing user records, KYC profiles, and transaction logs. Local development supports an isolated SQLite database.
+4. **Database**: TiDB Cloud MySQL-compatible database storing user records, KYC profiles, and transaction logs. Local development supports an isolated SQLite database.
 
 ## Core Capabilities
 - Self-service user registration and authentication.

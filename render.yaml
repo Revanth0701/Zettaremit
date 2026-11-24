@@ -5,6 +5,7 @@ services:
     name: ZettaRemit-App
     repo: https://github.com/Revanth0701/Zettaremit
     branch: main
+    region: oregon
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
@@ -26,28 +27,30 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
-      - key: AIVEN_HOST
+      - key: DB_HOST
         sync: false
-      - key: AIVEN_PORT
+      - key: DB_PORT
         sync: false
-      - key: AIVEN_DATABASE
+      - key: DB_NAME
         value: zettaremit
-      - key: AIVEN_USER
+      - key: DB_USER
         sync: false
-      - key: AIVEN_PASSWORD
+      - key: DB_PASSWORD
         sync: false
-      - key: AIVEN_CA_PATH
-        value: /etc/secrets/aiven-ca.pem
+      - key: DB_CA_PATH
+        value: /etc/secrets/tidb-ca.pem
       - key: ENABLE_AI_ASSISTANT
-        value: "false"
+        value: "true"
       - key: GEMINI_MODEL
         value: gemini-3.1-flash-lite
       - key: GEMINI_API_KEY
         sync: false
       - key: ENABLE_AI_AGENT
-        value: "false"
+        value: "true"
       - key: RAG_EMBEDDING_PROVIDER
-        value: none
+        value: gemini
+      - key: RAG_EMBEDDING_MODEL
+        value: gemini-embedding-001
       - key: RAG_BM25_FALLBACK
         value: "true"
       - key: RAG_FINAL_CHUNKS

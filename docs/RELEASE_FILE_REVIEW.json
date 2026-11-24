@@ -1,0 +1,337 @@
+{
+  "scope": "Current coherent application plus TiDB/Render release preparation",
+  "approval": "Not approved; no files staged, committed or pushed by this tool",
+  "existing_work": "Existing AI, authentication and frontend changes are explicitly included as current application work. This is not a migration-only patch.",
+  "private_exclusions": [
+    "backend/.env",
+    "backend/.env.cloud",
+    "backend/certs/",
+    ".local-backups/",
+    "node_modules/",
+    ".venv/",
+    "build/",
+    "dist/"
+  ],
+  "target_repository": "Revanth0701/Zettaremit",
+  "deployment_branch": "main",
+  "reviewed_base": "8ada74afe061a1eb21ba9718b2f33406b7c2399a",
+  "retained_upstream_artifacts": [
+    {
+      "path": "docs/LOCAL_AI_TESTING.md",
+      "action": "retain_unchanged",
+      "sha256": "9f7d5a8a3e4ea73334f30bd0c2f7c8022d47f42c6ac966dcdfc814516bae036d",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/LOCAL_BROWSER_VERIFICATION.md",
+      "action": "retain_unchanged",
+      "sha256": "7ed35237695404b22d8200930d7a6fa8e7cdab6969be72a0818a2a036739d1f5",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/PRODUCTION_DEPLOYMENT_READINESS.md",
+      "action": "retain_unchanged",
+      "sha256": "5e29e0d1c9886d2a91058c273cabb720782a7b3811e9247b4b9adec33a6ac394",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/PRODUCTION_RELEASE_MANIFEST.json",
+      "action": "retain_unchanged",
+      "sha256": "561e25781aaf64fb3bce079d190ce460eb4df17a1f11f2484d1d1ddd31f07ad7",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/PRODUCTION_ROLLBACK_PLAN.md",
+      "action": "retain_unchanged",
+      "sha256": "0b470ba97fe3af8690ed01beed27643d8c45b21f364da7b12284c656f2181092",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/REPOSITORY_UNIFICATION_INVENTORY.json",
+      "action": "retain_unchanged",
+      "sha256": "bda5fb0e516a56e9848c950305743881fb1a3e780dc6823683de2624e849d82c",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "docs/REPOSITORY_UNIFICATION_PLAN.md",
+      "action": "retain_unchanged",
+      "sha256": "a9e1933ca1734ce88cda044b1a1f0dfb5f1ea450851f245d103cda6701b23386",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "frontend/tests/approved_ux.browser.cjs",
+      "action": "retain_unchanged",
+      "sha256": "d0f640ddb6600874161d8d62c8475b73b34f356a317817725b3412c7234973c0",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "frontend/tests/navigation.browser.cjs",
+      "action": "retain_unchanged",
+      "sha256": "c21a58d6ae0ed1c616ea72a338d1eb2d55e01524e8c62d7c98f15c92934a4e90",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "frontend/tests/registration.browser.cjs",
+      "action": "retain_unchanged",
+      "sha256": "8278dbd8cc1f9145ebd985dfc25411f7c092b8280f7022b8ac11f8d46821ea43",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "frontend/tests/signup_inputs.browser.cjs",
+      "action": "retain_unchanged",
+      "sha256": "40a58bbba4d3589c5c825395f837ccbd40e47c83e2f0a0bb4c9b7a4d0336b447",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "tools/start_local_demo.py",
+      "action": "retain_unchanged",
+      "sha256": "1be665fa6aebacbc95342ab8bff24aec43bb99726e09fab96cf6ea182fe485d4",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "tools/test_local_ai_integration.py",
+      "action": "retain_unchanged",
+      "sha256": "5b219ff3b08db7ebfd181dfc252e8e2df9860e3846bdd9537becb6045aab9973",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    },
+    {
+      "path": "tools/test_local_browser.cjs",
+      "action": "retain_unchanged",
+      "sha256": "8a375108401ed18b53216d6d6b551c03f0f89a7de812b80418be6094c5c17301",
+      "reason": "Dated historical evidence or optional local test/helper; not runtime assets. No removal authorized."
+    }
+  ],
+  "files": [
+    {
+      "path": "Dockerfile",
+      "status": "modified",
+      "disposition": "include_deployment",
+      "reason": "TiDB configuration, secret exclusion or container deployment.",
+      "sha256": "e60fec77e942ebdf0c62eb25eb9c67be6a7823d8141638008a647f1cad279819"
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "disposition": "include_release_documentation",
+      "reason": "Current application contract or release instructions.",
+      "sha256": "ca5754cb9b1fd6291b8ead81cddaec19cdbb69b79d86b5799e22041106f6fcca"
+    },
+    {
+      "path": "backend/ai/knowledge_base/about_zettaremit.md",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "b4926b77ca3e29f9025355d559f4fb1596bf6eca3958f063ea93d34632ca2393"
+    },
+    {
+      "path": "backend/check_cloud_schema.py",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "03eed80500c3e7b9f073bc4a565cc8350c29f30c903caafc7e29651e316ed2e1"
+    },
+    {
+      "path": "backend/database_config.py",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "446fde99af93a8823f7ecdd0eec97a9b6b0eb37dd43dfbf278fdbfd1531980b0"
+    },
+    {
+      "path": "backend/test_cloud_connection.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "a54494f0925a407fb638043bfe415958a28ec26872b0c1cd0c7225d411f3a3a3"
+    },
+    {
+      "path": "backend/test_config_offline.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "7dbf791bd047fbe3a2af4f36bd432be0d2034def478b08f8212909e952be918c"
+    },
+    {
+      "path": "backend/test_registration_offline.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "c58fa9b903d89baec39af251c2a293a4c67e8054115d34ebc198580cde8d7203"
+    },
+    {
+      "path": "backend/test_schema_offline.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "e8cee125abbd95ec64b89c632c0dba4fb1757d3ff7ffed1e9b40d32d06aa3cb2"
+    },
+    {
+      "path": "deployment/.env.example",
+      "status": "modified",
+      "disposition": "include_deployment",
+      "reason": "TiDB configuration, secret exclusion or container deployment.",
+      "sha256": "7a90e101203a361136fcb43d2fbfb1af90f827a97eaf22813c2e13862bd7fcfa"
+    },
+    {
+      "path": "docs/CONTAINER_API_FAILURE_RESULTS.json",
+      "status": "untracked",
+      "disposition": "exclude_generated_evidence",
+      "reason": "Machine-specific test output; summarized in runbook.",
+      "sha256": "610029a818c0af7175759222985225185c039790b437a80b7284de3c8398b166"
+    },
+    {
+      "path": "docs/CONTAINER_HTTP_RESULTS.json",
+      "status": "untracked",
+      "disposition": "exclude_generated_evidence",
+      "reason": "Machine-specific test output; summarized in runbook.",
+      "sha256": "a52611e17b2c2a140768b6c615594f68e31c9cafae0feec0691b583cdc769edd"
+    },
+    {
+      "path": "docs/CONTAINER_JAVA_FAILURE_RESULTS.json",
+      "status": "untracked",
+      "disposition": "exclude_generated_evidence",
+      "reason": "Machine-specific test output; summarized in runbook.",
+      "sha256": "e8e62843d7777c5c3ef9474f3104a4e2c7b0e7959251afad710d9070662ce89b"
+    },
+    {
+      "path": "docs/CONTAINER_RESULTS.json",
+      "status": "untracked",
+      "disposition": "exclude_generated_evidence",
+      "reason": "Machine-specific test output; summarized in runbook.",
+      "sha256": "da3cb64de513e884e426aa37abd313ed9a4aa8805365938835a9f7bb092d0a90"
+    },
+    {
+      "path": "docs/DEPENDENCY_SECURITY_REVIEW.md",
+      "status": "untracked",
+      "disposition": "include_release_documentation",
+      "reason": "Current application contract or release instructions.",
+      "sha256": "54d16da5f3f5072fe051e41c74108e203826d553a01edad669a220fc2252defd"
+    },
+    {
+      "path": "docs/RELEASE.md",
+      "status": "modified",
+      "disposition": "include_release_documentation",
+      "reason": "Current application contract or release instructions.",
+      "sha256": "9ec884549e666c64c3f690f7c1b48ea69b459bd90d9aa2390527adfffdf2bb4e"
+    },
+    {
+      "path": "docs/RELEASE_FILE_REVIEW.json",
+      "status": "untracked",
+      "disposition": "include_release_review",
+      "reason": "Explicit candidate inventory; self-hash intentionally omitted.",
+      "sha256": null
+    },
+    {
+      "path": "docs/RENDER_RUNBOOK.md",
+      "status": "untracked",
+      "disposition": "include_release_documentation",
+      "reason": "Current application contract or release instructions.",
+      "sha256": "4c86c2881b4011b27492f234e85d126245ce386accdf6c61853c0c5ed8c01f3f"
+    },
+    {
+      "path": "docs/TIDB_MIGRATION.md",
+      "status": "untracked",
+      "disposition": "include_release_documentation",
+      "reason": "Current application contract or release instructions.",
+      "sha256": "809cbfc2941bbf700737a7984a83bf9845f418ba8569b4ebf995625fadff06ad"
+    },
+    {
+      "path": "frontend/lib/client.js",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "441ca4a56a9f76f3646e9b3e7d67890ef9d1fa0718095c6a32937f7e5c014c92"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "b086cdb91b3eb9017d20896be11c5f8ce2d858cede0d08ae46abe5d7a89e8b24"
+    },
+    {
+      "path": "frontend/screens/LoginScreen.js",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "fb762dd4826c548e6164897d51d6e65008e0bf0005f0cb5b5ccc12494d11da6f"
+    },
+    {
+      "path": "frontend/screens/RegistrationWizard.js",
+      "status": "modified",
+      "disposition": "include_existing_application_work",
+      "reason": "Current runtime feature or dependency; preserves existing application functionality.",
+      "sha256": "529faa900d8bda9927e53d9bc7d78ade36bd10da48df85c7785402de3eb5ee02"
+    },
+    {
+      "path": "frontend/tests/client.test.cjs",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Part of the frontend npm test suite.",
+      "sha256": "c508dfb086188ba5256441dfaed539c0e1e5840d9b486088a121f22f98fe2180"
+    },
+    {
+      "path": "frontend/tests/dependency_security.test.cjs",
+      "status": "untracked",
+      "disposition": "include_validation",
+      "reason": "Part of the frontend npm test suite.",
+      "sha256": "59ff6a6d5eef4d578f403a8198a12239bcdc8f38dd044637fe7a1e82c1b936f2"
+    },
+    {
+      "path": "frontend/tests/registration.test.cjs",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Part of the frontend npm test suite.",
+      "sha256": "c619500d08bb8c75cb5d8ce4ad2f0895d371f015f56729982293ba55e3763400"
+    },
+    {
+      "path": "frontend/tests/signup_native.test.cjs",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Part of the frontend npm test suite.",
+      "sha256": "94a72a9db141a0b0d2484fbf4fb77516932843e1d4e47b34f55c25808cf9e77e"
+    },
+    {
+      "path": "render.yaml",
+      "status": "modified",
+      "disposition": "include_deployment",
+      "reason": "TiDB configuration, secret exclusion or container deployment.",
+      "sha256": "a151002b71ca4e6631b01a4fc10c187fe98c3685ea01d0d97e4294298e5c6e7d"
+    },
+    {
+      "path": "tools/prepare_release_manifest.py",
+      "status": "untracked",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "d83a4cecfc0abc78a453e58d285699bf19e5e355b7a63c46b87be53b9c5c30fa"
+    },
+    {
+      "path": "tools/test_container_local.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "cdb103d8fd5d91089a27a4fec11a54994fafbf02d9f6feba005996bdcb6b451e"
+    },
+    {
+      "path": "tools/test_internal_e2e.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "96976be2b7fa709651818f4df92ffc40615b83653374afe83a4e156cadac94a9"
+    },
+    {
+      "path": "tools/test_release_container.py",
+      "status": "modified",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "baaf441e5ca6da639449aa07f80ed8336e351da3975b4f4585623f0b3b62e802"
+    },
+    {
+      "path": "tools/test_tidb_smoke.py",
+      "status": "untracked",
+      "disposition": "include_validation",
+      "reason": "Required backend, container or migration validation.",
+      "sha256": "2622cfc4f02bf156a84c0cbe6ff80e9bbe673df8ea526b4c294b5cb53295da11"
+    }
+  ]
+}

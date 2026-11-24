@@ -78,6 +78,31 @@ class RegistrationTests(unittest.TestCase):
             self.assertTrue(self.api.pwd_context.verify(self.payload['password'], user.password_hash))
         self.assertEqual(self.login().status_code, 200)
 
+    def test_cross_client_login_normalizes_email_and_preserves_password(self):
+        password = ' ' + secrets.token_hex(16) + '\u00e9 '
+        self.assertEqual(self.register(email='  Cross.Client@EXAMPLE.COM  ', password=password).status_code, 201)
+        with self.factory() as db:
+            self.assertTrue(db.query(self.api.User).one().email == 'cross.client@example.com')
+        with TestClient(self.api.app, raise_server_exceptions=False) as other:
+            for email in ['cross.client@example.com', '  CROSS.CLIENT@EXAMPLE.COM  ']:
+                response = other.post('/users/login', json=dict(email=email, password=password))
+                self.assertEqual(response.status_code, 200)
+            # Password whitespace, case and Unicode encoding remain significant.
+            for changed in [password.strip(), password.upper(), password.replace('\u00e9', 'e\u0301')]:
+                self.assertEqual(other.post('/users/login', json=dict(
+                    email='cross.client@example.com', password=changed)).status_code, 401)
+
+    def test_login_validation_is_distinct_from_credential_rejection(self):
+        self.assertEqual(self.register().status_code, 201)
+        invalid = self.client.post('/users/login', json=dict(
+            email='not-an-email', password=secrets.token_hex(16)))
+        self.assertEqual(invalid.status_code, 422)
+        self.assertTrue(any(item['loc'] == ['body', 'email'] for item in invalid.json()['detail']))
+        self.assertTrue(all(set(item) == {'loc', 'type'} for item in invalid.json()['detail']))
+        wrong = self.client.post('/users/login', json=dict(
+            email=self.payload['email'], password=secrets.token_hex(16)))
+        self.assertEqual(wrong.status_code, 401)
+
     def test_duplicate_returns_409_and_preserves_original_credentials(self):
         self.assertEqual(self.register().status_code, 201)
         with self.factory() as db:

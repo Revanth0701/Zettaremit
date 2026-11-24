@@ -228,7 +228,7 @@ function createClient({ baseUrl, allowHttp = false, storage, fetchImpl, onUnauth
       if (path === '/simulation/quote' && response.status === 503) messages[503] = 'Daily reference rates or the quote service are unavailable. Please try again later.';
       if (path === '/simulation/rate' && response.status === 503) messages[503] = 'Exchange rate temporarily unavailable';
       if (path === '/transactions/create' && response.status === 422) messages[422] = 'The quote is invalid or expired. Review a new quote before trying again.';
-      if (path === '/users/login' && response.status === 422) messages[422] = 'Incorrect email or password. Please try again.';
+      if (path === '/users/login' && method === 'POST' && response.status === 422) messages[422] = 'Check your sign-in details. Enter a valid email address and password.';
       if (path === '/ai/ask') {
         if (response.status === 429) messages[429] = 'The AI assistant is busy processing another query. Please wait a moment and retry.';
         if (response.status === 503) messages[503] = 'The local AI service is currently unavailable. Ensure Ollama is running.';
