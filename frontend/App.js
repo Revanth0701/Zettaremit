@@ -38,7 +38,7 @@ export default function App() {
         // Reuse an existing read-only authenticated endpoint to validate the bearer token.
         if (session) await api.history();
         if (!active) return;
-        setInitialState({ index: 0, routes: [readNavigation(routeStorage(), !!session)] });
+        setInitialState({ index: 0, routes: [readNavigation(routeStorage(), !!session, Platform.OS)] });
       } catch (error) {
         if (!active) return;
         if (error.status === 401 || error.message === 'Please sign in again.') setInitialState({ index: 0, routes: [{ name: 'Login' }] });
@@ -66,7 +66,7 @@ export default function App() {
   if (!initialState) return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9FA' }}><ActivityIndicator accessibilityLabel="Restoring session" color="#0047AB"/><Text style={{ marginTop: 12 }}>Loading ZettaRemit...</Text>{!!restoreError && <><Text accessibilityRole="alert" style={{ padding: 16 }}>{restoreError}</Text><TouchableOpacity accessibilityRole="button" onPress={() => setRestoreAttempt(value => value + 1)} style={{ padding: 16 }}><Text>Retry</Text></TouchableOpacity></>}</View>;
   return (
     <NavigationContainer ref={navigationRef} initialState={initialState} onStateChange={state => saveNavigation(routeStorage(), state)}>
-      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false, cardStyle: { flex: 1, overflow: 'hidden' } }}>
+      <Stack.Navigator initialRouteName={Platform.OS === 'web' ? 'Home' : 'Welcome'} screenOptions={{ headerShown: false, cardStyle: { flex: 1, overflow: 'hidden' } }}>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="HowItWorks" component={HowItWorksScreen} />
         <Stack.Screen name="RatesAndFees" component={RatesAndFeesScreen} />

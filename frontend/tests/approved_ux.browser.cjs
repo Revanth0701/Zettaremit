@@ -26,6 +26,7 @@ const origin = process.env.UX_TEST_ORIGIN || 'http://127.0.0.1:8091';
       const page = await context.newPage();
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await page.goto(origin);
+      await page.getByRole('button', { name: 'Get Started', exact: true }).first().click();
       await page.getByText('Sign-up', { exact: true }).click();
       await page.getByLabel('Email Address', { exact: true }).fill('test@example.com');
       const password = page.getByLabel('Password', { exact: true });
